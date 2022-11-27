@@ -1,10 +1,10 @@
 #pragma once
 #include <glm/glm.hpp>
-
+//glm::mat4 identity(1.0f);
 class Transform {
-	Transform() : transform(glm::mat4(1.0f)) {};
-	Transform(glm::mat4 transform) : transform(transform) {};
+	Transform() : transform() {};
+	Transform(const glm::mat4 &transform) : transform(transform) {};
 
 public:
-	glm::mat4 transform;
+	const glm::mat4 transform = glm::mat4(1.f);
 };

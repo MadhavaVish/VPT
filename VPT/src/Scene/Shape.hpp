@@ -4,12 +4,12 @@
 
 class Shape{
 public:
-
-    Shape(const Transform* objectToWorld);
-    virtual ~Shape();
-    virtual bool Intersect(const Ray &ray, float t_hit) const = 0;
+    //Shape() : objToWorld(&identity) {}
+    //Shape(const glm::mat4* objectToWorld) : objToWorld(objectToWorld) {};
+    virtual bool Intersect(const Ray &ray, float* t_hit) const = 0;
 
 public:
-    const Transform* objToWorld;
+    //const glm::mat4* objToWorld;
+    const int* pointer;
 
 };

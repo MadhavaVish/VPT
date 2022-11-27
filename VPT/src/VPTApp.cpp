@@ -25,13 +25,15 @@ public:
 			Render();
 		}
 		ImGui::End();
+
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		ImGui::Begin("Viewport");
 		m_ViewportWidth = ImGui::GetContentRegionAvail().x;
 		m_ViewportHeight = ImGui::GetContentRegionAvail().y;
 		auto image = m_Renderer.GetFinalImage();
 		if(image)
 			ImGui::Image(image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() }, ImVec2(0,1), ImVec2(1, 0));
-
+		ImGui::PopStyleVar();
 		ImGui::End();
 
 		Render();

@@ -1,9 +1,9 @@
 #include "Sphere.hpp"
 
-Sphere::Sphere(glm::vec3 pos, float r) : position(pos), radius(r), invr(1 / r) 
+Sphere::Sphere(glm::vec3 pos, float r, const int materialIdx) : Shape(materialIdx), position(pos), radius(r), invr(1 / r)
 {
 }
-Sphere::Sphere(const glm::mat4 &t, float r) : radius(r), invr(1/r)
+Sphere::Sphere(const glm::mat4 &t, float r, const int materialIdx) : Shape(materialIdx), radius(r), invr(1/r)
 {
 	position = t * glm::vec4(0.f);
 }

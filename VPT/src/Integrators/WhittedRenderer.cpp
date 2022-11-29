@@ -31,12 +31,11 @@ void Whitted::Render(const Scene &scene, const Camera& camera)
 			glm::vec4 color(TraceRay(ray, 0), 1.f);
 
 			m_ImageData[x +y*m_FinalImage->GetWidth()] = Utils::ConvertToRGBA(color);
-
 		}
 	}
 	m_FinalImage->SetData(m_ImageData);
 }
-constexpr int maxDepth = 3;
+constexpr int maxDepth = 5;
 float fresnel(const glm::vec3& I, const glm::vec3& N, const float& ior)
 {
 	float cosi = glm::clamp(glm::dot (I, N), -1.f, 1.f);
@@ -106,17 +105,19 @@ glm::vec3 Whitted::TraceRay(Ray &ray, int depth)
 			{
 				glm::vec3 path = hitPoint - ray.origin;
 				float pathLength = glm::dot(path, path);
-				glm::vec3 attentuation = glm::exp(-(glm::vec3(1.f)-hitColor)* .15f *pathLength);
+				glm::vec3 attentuation = glm::exp(-(glm::vec3(1.f)-hitColor)* .99f *pathLength);
 				//glm::vec3 attentuation(1.f);
 				glm::vec3 refrColor = hitColor * attentuation * TraceRay(refracted, depth + 1);
 				glm::vec3 reflColor = hitColor * TraceRay(reflected, depth + 1);
-				return (1 - fr) * reflColor + (fr) * refrColor;
+				return (fr) * reflColor + (1-fr) * refrColor;
+				//return refrColor;
 			}
 			else
 			{
 				glm::vec3 refrColor = hitColor*TraceRay(refracted, depth + 1);
 				glm::vec3 reflColor = hitColor*TraceRay(reflected, depth + 1);
 				return fr * reflColor + (1 - fr) * refrColor;
+				//return refrColor;
 			}
 
 		}
@@ -144,6 +145,7 @@ glm::vec3 Whitted::TraceRay(Ray &ray, int depth)
 			}
 			float diffuse = intensity * dot(surfaceNormal, directionToLight) * glm::one_over_pi<float>();
 			return glm::clamp(diffuse * hitColor, 0.f, 1.f);
+			
 			/*else
 				return  glm::vec3(0.f);*/
 			// ambient lighting based on sky color

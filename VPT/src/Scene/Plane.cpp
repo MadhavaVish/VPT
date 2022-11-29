@@ -1,7 +1,7 @@
 #include "Plane.hpp"
 
 
-Plane::Plane(glm::vec3 n, float d) : normal(n), distance(d)
+Plane::Plane(glm::vec3 n, float d, int materialIdx) : Shape(materialIdx), normal(n), distance(d)
 {};
 
 bool Plane::Intersect(const int idx, Ray& ray) const

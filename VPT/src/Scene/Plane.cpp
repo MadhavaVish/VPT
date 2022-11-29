@@ -1,13 +1,15 @@
 #include "Plane.hpp"
 
 
-Plane::Plane(glm::vec3 n, float d) : normal(n), distance(d)
+Plane::Plane(glm::vec3 n, float d, const int materialIdx) : Shape(materialIdx),normal(n), distance(d)
 {};
 
 bool Plane::Intersect(const int idx, Ray& ray) const
 {
 	float t = -(glm::dot(ray.origin, this->normal) + this->distance) / (glm::dot(ray.direction, this->normal));
 	if (t < ray.time && t > 0) return true;
+
+	return false;
 };
 
 glm::vec3 Plane::GetNormal(const glm::vec3 I) const

@@ -3,38 +3,29 @@
 Sphere::Sphere(glm::vec3 pos, float r, const int materialIdx) : Shape(materialIdx), position(pos), radius(r), invr(1 / r)
 {
 }
-Sphere::Sphere(const glm::mat4 &t, float r, const int materialIdx) : Shape(materialIdx), radius(r), invr(1/r)
-{
-	position = t * glm::vec4(0.f);
-}
 
-bool Sphere::Intersect(const Ray& ray, float* t_hit) const
+bool Sphere::Intersect(Ray& ray, float& tHit, SurfaceInteraction& intersection) const
 {
-	glm::vec3 oc = ray.origin - this->position;
+	glm::vec3 oc = ray.origin - position;
 	float b = glm::dot(oc, ray.direction);
-	float c = glm::dot(oc, oc) - this->radius * this->radius;
+	float c = glm::dot(oc, oc) - radius * radius;
 	float t, d = b * b - c;
 	
 	if (d <= 0) return false;
 	d = sqrt(d), t = -b - d;
-	if (t < *t_hit && t > 0)
+	if (t < tHit && t > 0)
 	{
-		*t_hit = t;
+		tHit = t;
+		intersection.hit_normal = (ray(t) - position) * invr;
+		intersection.material = materialIndex;
 		return true;
 	};
 	t = d - b;
-	if (t < *t_hit && t > 0) {
-		*t_hit = t;
+	if (t < tHit && t > 0) {
+		tHit = t;
+		intersection.hit_normal = (ray(t) - position) * invr;
+		intersection.material = materialIndex;
 		return true;
 	};
 	return false;
-}
-glm::vec3 Sphere::GetNormal(const glm::vec3 intersection) const
-{
-	return (intersection - position) * invr;
-}
-
-glm::vec3 Sphere::GetAlbedo(const glm::vec3 intersection) const
-{
-	return glm::vec3(1, 0.8f, 0.2f);
 }

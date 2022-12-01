@@ -1,6 +1,10 @@
 #pragma once
+#include "../Scene/Shape.hpp"
+#include "../Scene/Materials/Material.hpp"
 
 struct SurfaceInteraction {
-	float t_isct;
-	
+	glm::vec3 hit_normal;
+	int material = 0;
+	//Light* light = nullptr;
+	glm::vec2 uv;
 };

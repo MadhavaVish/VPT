@@ -1,7 +1,5 @@
 #include "Triangle.hpp"
 
-using namespace glm;
-
 
 //WARNING: This does not currently account for whether the points are defined in clockwise or counter clockwise order.
 Triangle::Triangle(vec3 p1, vec3 p2, vec3 p3, const int materialIdx) :

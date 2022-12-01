@@ -9,11 +9,10 @@ public:
     Shape(const int materialIdx) : materialIndex(materialIdx) {};
     //Shape() : objToWorld(&identity) {}
     //Shape(const glm::mat4* objectToWorld) : objToWorld(objectToWorld) {};
-    virtual bool Intersect(const Ray &ray, float* t_hit) const = 0;
+    virtual bool Intersect(Ray& ray, float& tHit, SurfaceInteraction& intersection) const = 0;
 
 public:
     //const glm::mat4* objToWorld;
-    const int* pointer;
     int materialIndex;
 
 };

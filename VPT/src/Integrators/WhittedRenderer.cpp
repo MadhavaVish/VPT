@@ -80,27 +80,29 @@ glm::vec3 Whitted::TraceRay(Ray &ray, int depth)
 	}
 	glm::vec3 pointLight(1.f, 1.f, 1.f);
 	float intensity = 3.f;
+	
 	float closest = std::numeric_limits<float>::infinity();
-	int objIndex = m_ActiveScene->Intersect(ray, closest);
-	const Sphere* obj = &(m_ActiveScene->spheres[objIndex]);
-	glm::vec3 surfaceNormal = obj->GetNormal(ray(closest));
+	SurfaceInteraction intersection;
+	bool hit = m_ActiveScene->Intersect(ray, closest, intersection);
+
+	glm::vec3 surfaceNormal = intersection.hit_normal;
 	glm::vec3 hitPoint = ray(closest);
-	glm::vec3 hitColor = m_ActiveScene->materials[obj->materialIndex].albedo;
-	if (objIndex < 0)
+	glm::vec3 hitColor = m_ActiveScene->materials[intersection.material].albedo;
+	if (!hit)
 	{
 		return glm::vec3(0.4f);
 	}
 	else
 	{
-		if (m_ActiveScene->materials[obj->materialIndex].glass)
+		if (m_ActiveScene->materials[intersection.material].glass)
 		{
 			glm::vec3 refl = glm::normalize(reflect(ray.direction, surfaceNormal));
-			glm::vec3 refr = glm::normalize(refract(ray.direction, surfaceNormal, m_ActiveScene->materials[obj->materialIndex].ior));
+			glm::vec3 refr = glm::normalize(refract(ray.direction, surfaceNormal, m_ActiveScene->materials[intersection.material].ior));
 			glm::vec3 reflO = glm::dot(refl, surfaceNormal) < 0 ? hitPoint - surfaceNormal* 0.0001f : hitPoint + surfaceNormal* 0.0001f;
 			glm::vec3 refrO = glm::dot(refr, surfaceNormal) < 0 ? hitPoint - surfaceNormal * 0.0001f : hitPoint + surfaceNormal * 0.0001f;
 			Ray reflected(reflO, refl);
 			Ray refracted(refrO, refr);
-			float fr = fresnel(ray.direction, surfaceNormal, m_ActiveScene->materials[obj->materialIndex].ior);
+			float fr = fresnel(ray.direction, surfaceNormal, m_ActiveScene->materials[intersection.material].ior);
 			if (glm::dot(ray.direction, surfaceNormal) > 0)
 			{
 				glm::vec3 path = hitPoint - ray.origin;
@@ -121,7 +123,7 @@ glm::vec3 Whitted::TraceRay(Ray &ray, int depth)
 			}
 
 		}
-		else if (m_ActiveScene->materials[obj->materialIndex].metallic)
+		else if (m_ActiveScene->materials[intersection.material].metallic)
 		{
 			glm::vec3 refl = glm::normalize(reflect(ray.direction, surfaceNormal));
 			glm::vec3 reflO = glm::dot(refl, surfaceNormal) < 0 ? hitPoint - surfaceNormal * 0.0001f : hitPoint + surfaceNormal * 0.0001f;
@@ -136,7 +138,8 @@ glm::vec3 Whitted::TraceRay(Ray &ray, int depth)
 			directionToLight = glm::normalize(directionToLight);
 			Ray shadow(hitPoint+ surfaceNormal *0.0001f, directionToLight);
 			float occluded = std::numeric_limits<float>::infinity();
-			if (!(m_ActiveScene->Intersect(shadow, occluded) < 0))
+			SurfaceInteraction nop;
+			if (!m_ActiveScene->Intersect(shadow, occluded, nop))
 			{
 				float dist = glm::sqrt(dist2);
 				if (occluded < dist) {

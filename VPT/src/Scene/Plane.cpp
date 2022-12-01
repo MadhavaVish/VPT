@@ -4,39 +4,54 @@
 Plane::Plane(glm::vec3 n, float d, int materialIdx) : Shape(materialIdx), normal(n), distance(d)
 {};
 
-bool Plane::Intersect(const int idx, Ray& ray) const
+bool Plane::Intersect(Ray& ray, float &tHit, SurfaceInteraction &intersection) const
 {
 	float t = -(glm::dot(ray.origin, this->normal) + this->distance) / (glm::dot(ray.direction, this->normal));
-	if (t < ray.time && t > 0) return true;
+	if (t < tHit && t > 0)
+	{
+		tHit = t;
+		intersection.hit_normal = normal;
+		intersection.material = materialIndex;
+		return true;
+	}
+	return false;
 };
 
-glm::vec3 Plane::GetNormal(const glm::vec3 I) const
+bool PlaneXY::Intersect(Ray& ray, float& tHit, SurfaceInteraction& intersection) const
 {
-	return this->normal;
-};	
+	float t = -(z + ray.origin.z) / ray.direction.z;
+	if (t < tHit && t>0)
+	{
+		intersection.hit_normal = normal;
+		intersection.material = materialIndex;
+		tHit = t;
+		return true;
+	}
+	return false;
+}
 
-glm::vec3 Plane::GetAlbedo(const glm::vec3 I) const
+bool PlaneXZ::Intersect(Ray& ray, float& tHit, SurfaceInteraction& intersection) const
 {
-	if (this->normal.y == 1)
+	float t = -(y + ray.origin.y) / ray.direction.y;
+	if (t < tHit && t>0)
 	{
-		// floor albedo: checkerboard
-		int ix = (int)(I.x * 2 + 96.01f);
-		int iz = (int)(I.z * 2 + 96.01f);
-		// add deliberate aliasing to two tile
-		if (ix == 98 && iz == 98) ix = (int)(I.x * 32.01f), iz = (int)(I.z * 32.01f);
-		if (ix == 94 && iz == 98) ix = (int)(I.x * 64.01f), iz = (int)(I.z * 64.01f);
-		return glm::vec3(((ix + iz) & 1) ? 1 : 0.3f);
+		intersection.hit_normal = normal;
+		intersection.material = materialIndex;
+		tHit = t;
+		return true;
 	}
-	else if (this->normal.z == -1)
+	return false;
+}
+
+bool PlaneYZ::Intersect(Ray& ray, float& tHit, SurfaceInteraction& intersection) const
+{
+	float t = -(x + ray.origin.x) / ray.direction.x;
+	if (t < tHit && t>0)
 	{
-		//Let's ignore the logo for now.
-		//// back wall: logo
-		//static Surface logo("assets/logo.png");
-		//int ix = (int)((I.x + 4) * (128.0f / 8));
-		//int iy = (int)((2 - I.y) * (64.0f / 3));
-		//uint p = logo.pixels[(ix & 127) + (iy & 63) * 128];
-		//uint3 i3((p >> 16) & 255, (p >> 8) & 255, p & 255);
-		//return glm:vec3(i3) * (1.0f / 255.0f);
+		intersection.hit_normal = normal;
+		intersection.material = materialIndex;
+		tHit = t;
+		return true;
 	}
-	return glm::vec3(0.93f);
-};
+	return false;
+}

@@ -3,6 +3,8 @@
 
 #include "Walnut/Image.h"
 #include "Walnut/Timer.h"
+#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
+#define GLM_FORCE_AVX
 
 #include "Integrators/WhittedRenderer.hpp"
 #include "Utils/Camera.hpp"

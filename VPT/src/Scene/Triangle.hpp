@@ -2,7 +2,7 @@
 #include "Shape.hpp"
 #include "../Utils/Ray.hpp"
 
-using namespace glm;
+using glm::vec3;
 
 class Triangle : public Shape {
 public:

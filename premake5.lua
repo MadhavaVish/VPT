@@ -4,6 +4,11 @@ workspace "VPT"
    configurations { "Debug", "Release", "Dist" }
    startproject "VPT"
 
+includedirs
+{
+   "Walnut/vendor/stb_image"
+}
+openmp "On"
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 include "Walnut/WalnutExternal.lua"
 

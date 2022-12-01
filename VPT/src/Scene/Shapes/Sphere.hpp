@@ -1,6 +1,5 @@
 #pragma once
 #include "Shape.hpp"
-#include "../Utils/Ray.hpp"
 
 class Sphere : public Shape {
 public:

@@ -1,6 +1,5 @@
 #pragma once
 #include "Shape.hpp"
-#include "../Utils/Ray.hpp"
 
 using glm::vec3;
 

@@ -1,7 +1,7 @@
 #pragma once
 #include "../Utils/Ray.hpp"
-#include "Sphere.hpp"
-#include "Plane.hpp"
+#include "Shapes/Sphere.hpp"
+#include "Shapes/Plane.hpp"
 #include "Materials/Material.hpp"
 #include "../Utils/SurfaceInteraction.hpp"
 #include <vector>

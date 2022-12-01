@@ -1,8 +1,8 @@
 #pragma once
-#include "../Utils/Transform.hpp"
-#include "../Utils/Ray.hpp"
-#include "../Utils/SurfaceInteraction.hpp"
-#include "Materials/Material.hpp"
+#include "../../Utils/Transform.hpp"
+#include "../../Utils/Ray.hpp"
+#include "../../Utils/SurfaceInteraction.hpp"
+#include "../Materials/Material.hpp"
 #include "glm/glm.hpp"
 class Shape{
 public:

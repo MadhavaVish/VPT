@@ -18,11 +18,11 @@ namespace Utils {
 }
 void Whitted::Render(const Scene &scene, const Camera& camera)
 {
-	m_ActiveCamera = &camera;
 	m_ActiveScene = &scene;
-	#pragma omp parallel for
+	#pragma omp parallel for schedule(dynamic)
 	for (int y = 0; y < m_FinalImage->GetHeight(); y++)
 	{
+		m_ActiveCamera = &camera;
 		for (uint32_t x = 0; x < m_FinalImage->GetWidth(); x++)
 		{
 			Ray ray;
@@ -79,21 +79,21 @@ glm::vec3 Whitted::TraceRay(Ray &ray, int depth)
 		return glm::vec3(0.4f);
 	}
 	glm::vec3 pointLight(1.f, 1.f, 1.f);
-	float intensity = 3.f;
+	float intensity = 10.f;
 	
 	float closest = std::numeric_limits<float>::infinity();
 	SurfaceInteraction intersection;
 	bool hit = m_ActiveScene->Intersect(ray, closest, intersection);
 
-	glm::vec3 surfaceNormal = intersection.hit_normal;
-	glm::vec3 hitPoint = ray(closest);
-	glm::vec3 hitColor = m_ActiveScene->materials[intersection.material].albedo;
 	if (!hit)
 	{
 		return glm::vec3(0.4f);
 	}
 	else
 	{
+		glm::vec3 surfaceNormal = intersection.hit_normal;
+		glm::vec3 hitPoint = ray(closest);
+		glm::vec3 hitColor = m_ActiveScene->materials[intersection.material].albedo;
 		if (m_ActiveScene->materials[intersection.material].glass)
 		{
 			glm::vec3 refl = glm::normalize(reflect(ray.direction, surfaceNormal));
@@ -146,7 +146,7 @@ glm::vec3 Whitted::TraceRay(Ray &ray, int depth)
 					return glm::vec3(0.f);
 				}
 			}
-			float diffuse = intensity * dot(surfaceNormal, directionToLight) * glm::one_over_pi<float>();
+			float diffuse = intensity * dot(surfaceNormal, directionToLight) * glm::one_over_pi<float>() / dist2;
 			return glm::clamp(diffuse * hitColor, 0.f, 1.f);
 			
 			/*else

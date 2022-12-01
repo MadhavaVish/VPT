@@ -1,6 +1,5 @@
 #pragma once
 #include "Shape.hpp"
-#include "../Utils/Ray.hpp"
 
 
 class Plane : public Shape

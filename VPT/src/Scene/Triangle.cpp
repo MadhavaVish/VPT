@@ -1,6 +1,6 @@
 #include "Triangle.hpp"
 
-using namespace glm;
+using glm::vec3;
 
 
 //WARNING: This does not currently account for whether the points are defined in clockwise or counter clockwise order.

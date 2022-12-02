@@ -4,13 +4,13 @@ using glm::vec3;
 
 
 //WARNING: This does not currently account for whether the points are defined in clockwise or counter clockwise order.
-Triangle::Triangle(vec3 p1, vec3 p2, vec3 p3, const int materialIdx) :
+Tri::Tri(vec3 p1, vec3 p2, vec3 p3, const int materialIdx) :
 	Shape(materialIdx), p(p1), q(p2), r(p3), normal(normalize(cross(p2-p1,p3-p1))) {};
 
-Triangle::Triangle(vec3 p1, vec3 p2, vec3 p3, vec3 n, const int materialIdx) :
+Tri::Tri(vec3 p1, vec3 p2, vec3 p3, vec3 n, const int materialIdx) :
 	Shape(materialIdx), p(p1), q(p2), r(p3), normal(n) {};
 
-bool Triangle::Intersect(const int idx, Ray& ray) const
+bool Tri::Intersect(const int idx, Ray& ray) const
 {
 	//Using Moller Trumbore algorithm
 	vec3 A = this->q - this->p;
@@ -28,17 +28,17 @@ bool Triangle::Intersect(const int idx, Ray& ray) const
 	float v = dot(ray.direction, qvec) * invDeterminant;
 	if (v < 0 || u + v > 1) return false;
 
-	// float t = dot(B, qvec) * invDeterminant; //It's not necessary to calculate t since we are not currently storing the value.
+	float t = dot(B, qvec) * invDeterminant; //It's not necessary to calculate t since we are not currently storing the value.
 
 	return true;
 };
 
-glm::vec3 Triangle::GetNormal(const vec3 intersection) const
+glm::vec3 Tri::GetNormal(const vec3 intersection) const
 {
 	return this->normal;
 };
 
-glm::vec3 Triangle::GetAlbedo(const vec3 intersection) const
+glm::vec3 Tri::GetAlbedo(const vec3 intersection) const
 {
-	return vec3(1, 0.8f, 0.2f);
+	return vec3(1.f, 0.8f, 0.2f);
 };

@@ -79,7 +79,7 @@ glm::vec3 Whitted::TraceRay(Ray &ray, int depth)
 		return glm::vec3(0.4f);
 	}
 	glm::vec3 pointLight(1.f, 1.f, 1.f);
-	float intensity = 10.f;
+	float intensity = 2;
 	
 	float closest = std::numeric_limits<float>::infinity();
 	SurfaceInteraction intersection;
@@ -106,8 +106,8 @@ glm::vec3 Whitted::TraceRay(Ray &ray, int depth)
 			if (glm::dot(ray.direction, surfaceNormal) > 0)
 			{
 				glm::vec3 path = hitPoint - ray.origin;
-				float pathLength = glm::dot(path, path);
-				glm::vec3 attentuation = glm::exp(-(glm::vec3(1.f)-hitColor)* .99f *pathLength);
+				float pathLength = glm::sqrt(glm::dot(path, path));
+				glm::vec3 attentuation = glm::exp(-(hitColor) * 0.15f * pathLength);
 				//glm::vec3 attentuation(1.f);
 				glm::vec3 refrColor = hitColor * attentuation * TraceRay(refracted, depth + 1);
 				glm::vec3 reflColor = hitColor * TraceRay(reflected, depth + 1);
@@ -132,21 +132,21 @@ glm::vec3 Whitted::TraceRay(Ray &ray, int depth)
 		}
 		else
 		{
-			glm::vec3 directionToLight = pointLight - hitPoint;
+			glm::vec3 directionToLight = pointLight-hitPoint;
 			float dist2 = glm::dot(directionToLight, directionToLight);
 			
 			directionToLight = glm::normalize(directionToLight);
 			Ray shadow(hitPoint+ surfaceNormal *0.0001f, directionToLight);
 			float occluded = std::numeric_limits<float>::infinity();
 			SurfaceInteraction nop;
-			if (!m_ActiveScene->Intersect(shadow, occluded, nop))
+			if (m_ActiveScene->Intersect(shadow, occluded, nop))
 			{
-				float dist = glm::sqrt(dist2);
-				if (occluded < dist) {
+				//float dist = glm::sqrt(dist2);
+				if (occluded*occluded < dist2) {
 					return glm::vec3(0.f);
 				}
 			}
-			float diffuse = intensity * dot(surfaceNormal, directionToLight) * glm::one_over_pi<float>() / dist2;
+			float diffuse = intensity * dot(surfaceNormal, directionToLight) * glm::one_over_pi<float>();
 			return glm::clamp(diffuse * hitColor, 0.f, 1.f);
 			
 			/*else

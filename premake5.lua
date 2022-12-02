@@ -6,7 +6,8 @@ workspace "VPT"
 
 includedirs
 {
-   "Walnut/vendor/stb_image"
+   "Walnut/vendor/stb_image",
+   "vendor/tiny_obj_loader",
 }
 openmp "On"
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"

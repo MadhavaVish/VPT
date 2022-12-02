@@ -1,10 +1,14 @@
 #pragma once
 #include <glm/glm.hpp>
-//glm::mat4 identity(1.0f);
 class Transform {
-	Transform() : transform() {};
-	Transform(const glm::mat4 &transform) : transform(transform) {};
+public:
+	Transform() {};
+	Transform(glm::mat4 transform) : objToWorld(transform)
+	{
+		worldToObj = glm::inverse(objToWorld);
+	};
 
 public:
-	const glm::mat4 transform = glm::mat4(1.f);
+	glm::mat4 objToWorld;
+	glm::mat4 worldToObj;
 };

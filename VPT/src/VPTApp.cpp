@@ -7,6 +7,7 @@
 #define GLM_FORCE_AVX
 
 #include "Integrators/WhittedRenderer.hpp"
+#include "Integrators/PathTracer.hpp"
 #include "Utils/Camera.hpp"
 #include <memory>
 using namespace Walnut;
@@ -15,8 +16,12 @@ class ExampleLayer : public Walnut::Layer
 {
 public:
 	ExampleLayer() : m_Camera(45.0f, 0.1f, 100.0f) {}
+
 	virtual void OnUpdate(float ts) override {
-		m_Camera.OnUpdate(ts);
+		if (m_Camera.OnUpdate(ts))
+		{
+			m_Renderer.Reset();
+		}
 	}
 	virtual void OnUIRender() override
 	{
@@ -25,6 +30,11 @@ public:
 		if (ImGui::Button("Render")) 
 		{
 			Render();
+		}
+		ImGui::Checkbox("Accumulate", &m_Renderer.GetSettings().Accumulate);
+		if (ImGui::Button("Reset"))
+		{
+			m_Renderer.Reset();
 		}
 		ImGui::End();
 
@@ -52,7 +62,8 @@ public:
 	}
 private:
 	Scene m_Scene;
-	Whitted m_Renderer;
+	//Whitted m_Renderer;
+	PathTracer m_Renderer;
 	Camera m_Camera;
 	uint32_t  m_ViewportHeight = 0, m_ViewportWidth = 0;
 	float m_lastRenderTime = 0.f;

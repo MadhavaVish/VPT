@@ -13,7 +13,7 @@ public:
 	Scene();
 
 	bool Intersect(Ray& ray, float &tHit, SurfaceInteraction& intersection) const;
-	void AddMaterial(glm::vec3 albedo, bool metallic, bool glass, float ior);
+	void AddMaterial(const glm::vec3 albedo, const float& ks, const float& exponent, const float& radiance, const bool& mirror, const bool& glass, const float& ior);
 	void addSphere(glm::vec3 pos, float r, int material);
 	void addModel(const std::string& filepath, Transform transform, int material);
 

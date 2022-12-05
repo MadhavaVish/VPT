@@ -6,7 +6,7 @@
 void Whitted::Render(const Scene &scene, const Camera& camera)
 {
 	m_ActiveScene = &scene;
-	float gamma = 1 / 2.2f;
+	float gamma = 1;
 	#pragma omp parallel for schedule(dynamic)
 	for (int y = 0; y < m_FinalImage->GetHeight(); y++)
 	{

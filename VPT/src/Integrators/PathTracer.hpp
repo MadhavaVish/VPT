@@ -24,6 +24,7 @@ public:
 	Settings& GetSettings() { return settings; }
 private:
 	glm::vec3 TraceRay(Ray& ray);
+	glm::vec3 TraceRay(Ray& ray, int depth);
 private:
 	const Scene* m_ActiveScene;
 	const Camera* m_ActiveCamera;

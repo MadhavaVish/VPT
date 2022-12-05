@@ -12,6 +12,7 @@ struct Material {
 	bool glass;
 	float ks;
 	float ior;
+	int textureIndex = -1;
 };
 
 static glm::vec3 sampleCosineHemisphere(float& pdf)

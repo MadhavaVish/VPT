@@ -3,7 +3,17 @@
 Sphere::Sphere(glm::vec3 pos, float r, const int materialIdx) : Shape(materialIdx), position(pos), radius(r), invr(1 / r)
 {
 }
+glm::vec2 Sphere::getUVCoords(const glm::vec3& point) const
+{
+	glm::vec3 dir = glm::normalize(point);
+	float phi = std::atan2(-dir.z, dir.x) + glm::pi<float>();
+	float theta = std::acos(-dir.y);
+	float u = phi * glm::one_over_two_pi<float>();
+	float v = 1 - theta * glm::one_over_pi<float>();
 
+	return glm::vec2(u, v);
+
+}
 bool Sphere::Intersect(Ray& ray, float& tHit, SurfaceInteraction& intersection) const
 {
 	glm::vec3 oc = ray.origin - position;
@@ -18,6 +28,7 @@ bool Sphere::Intersect(Ray& ray, float& tHit, SurfaceInteraction& intersection) 
 		tHit = t;
 		intersection.hit_normal = (ray(t) - position) * invr;
 		intersection.material = materialIndex;
+		intersection.uv = getUVCoords(intersection.hit_normal);
 		return true;
 	};
 	t = d - b;
@@ -25,6 +36,7 @@ bool Sphere::Intersect(Ray& ray, float& tHit, SurfaceInteraction& intersection) 
 		tHit = t;
 		intersection.hit_normal = (ray(t) - position) * invr;
 		intersection.material = materialIndex;
+		intersection.uv = getUVCoords(intersection.hit_normal);
 		return true;
 	};
 	return false;

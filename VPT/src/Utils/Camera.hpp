@@ -19,13 +19,12 @@ public:
 	const glm::vec3& GetPosition() const { return m_Position; }
 	const glm::vec3& GetDirection() const { return m_ForwardDirection; }
 
-	const std::vector<glm::vec3>& GetRayDirections() const { return m_RayDirections; }
+	const glm::vec3 getPrimaryRay(const int x, const int y, const glm::vec2 offset = glm::vec2(0.f)) const;
 
 	float GetRotationSpeed();
 private:
 	void RecalculateProjection();
 	void RecalculateView();
-	void RecalculateRayDirections();
 private:
 	glm::mat4 m_Projection{ 1.0f };
 	glm::mat4 m_View{ 1.0f };
@@ -38,9 +37,6 @@ private:
 
 	glm::vec3 m_Position{ 0.0f, 0.0f, 0.0f };
 	glm::vec3 m_ForwardDirection{ 0.0f, 0.0f, 0.0f };
-
-	// Cached ray directions
-	std::vector<glm::vec3> m_RayDirections;
 
 	glm::vec2 m_LastMousePosition{ 0.0f, 0.0f };
 

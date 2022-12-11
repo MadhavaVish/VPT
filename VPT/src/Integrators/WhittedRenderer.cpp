@@ -6,7 +6,9 @@
 void Whitted::Render(const Scene &scene, const Camera& camera)
 {
 	m_ActiveScene = &scene;
-	float gamma = 1;
+	float gamma = 1/2.2;
+	const float invWidth = 1.f / m_FinalImage->GetWidth();
+	const float invHeight = 1.f / m_FinalImage->GetWidth();
 	#pragma omp parallel for schedule(dynamic)
 	for (int y = 0; y < m_FinalImage->GetHeight(); y++)
 	{
@@ -15,7 +17,9 @@ void Whitted::Render(const Scene &scene, const Camera& camera)
 		{
 			Ray ray;
 			ray.origin = m_ActiveCamera->GetPosition();
-			ray.direction = m_ActiveCamera->GetRayDirections()[x + y * m_FinalImage->GetWidth()];
+			glm::vec2 randomOffset(Walnut::Random::Float() * invWidth, Walnut::Random::Float() * invHeight);
+			ray.direction = m_ActiveCamera->getPrimaryRay(x, y, randomOffset);
+			//ray.direction = m_ActiveCamera->GetRayDirections()[x + y * m_FinalImage->GetWidth()];
 			//glm::vec4 color(TraceRay(ray, 0), 1.f);
 			glm::vec4 color(glm::pow(TraceRay(ray, 0), glm::vec3(gamma)), 1.f);
 			m_ImageData[x +y*m_FinalImage->GetWidth()] = Utils::ConvertToRGBA(color);
@@ -23,7 +27,7 @@ void Whitted::Render(const Scene &scene, const Camera& camera)
 	}
 	m_FinalImage->SetData(m_ImageData);
 }
-constexpr int maxDepth = 5;
+constexpr int maxDepth = 50;
 
 glm::vec3 Whitted::TraceRay(Ray &ray, int depth)
 {
@@ -40,13 +44,18 @@ glm::vec3 Whitted::TraceRay(Ray &ray, int depth)
 
 	if (!hit)
 	{
-		return glm::vec3(0.4f);
+		return m_ActiveScene->getSkyColor(ray);
 	}
 	else
 	{
+		Material mat = m_ActiveScene->materials[intersection.material];
+		glm::vec3 hitColor = mat.albedo;
+		if (mat.textureIndex >= 0)
+		{
+			hitColor *= m_ActiveScene->textures[mat.textureIndex]->sampleImageTexture(intersection.uv.x, intersection.uv.y);
+		}
 		glm::vec3 surfaceNormal = intersection.hit_normal;
 		glm::vec3 hitPoint = ray(closest);
-		glm::vec3 hitColor = m_ActiveScene->materials[intersection.material].albedo;
 		if (m_ActiveScene->materials[intersection.material].glass)
 		{
 			glm::vec3 refl = glm::normalize(reflect(ray.direction, surfaceNormal));
@@ -60,7 +69,7 @@ glm::vec3 Whitted::TraceRay(Ray &ray, int depth)
 			{
 				glm::vec3 path = hitPoint - ray.origin;
 				float pathLength = glm::sqrt(glm::dot(path, path));
-				glm::vec3 attentuation = glm::exp(-(hitColor) * 0.15f * pathLength);
+				glm::vec3 attentuation = glm::exp(-(hitColor) * 0.6f * pathLength);
 				//glm::vec3 attentuation(1.f);
 				glm::vec3 refrColor = hitColor * attentuation * TraceRay(refracted, depth + 1);
 				glm::vec3 reflColor = hitColor * TraceRay(reflected, depth + 1);

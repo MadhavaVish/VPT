@@ -14,6 +14,8 @@ public:
 	struct Settings
 	{
 		bool Accumulate = true;
+		bool Vignette = false;
+		float VignetteAmount = 2.f;
 	};
 	PathTracer() = default;
 
@@ -23,7 +25,7 @@ public:
 	std::shared_ptr<Walnut::Image> GetFinalImage() const { return m_FinalImage; }
 	Settings& GetSettings() { return settings; }
 private:
-	glm::vec3 TraceRay(Ray& ray);
+	//glm::vec3 TraceRay(Ray& ray);
 	glm::vec3 TraceRay(Ray& ray, int depth);
 private:
 	const Scene* m_ActiveScene;

@@ -76,14 +76,17 @@ Model::Model(const std::string& filepath, Transform transform, int materialIdx) 
 void Model::GetTriangles(std::vector<Triangle>& triangles) const
 {
     //std::shared_ptr<Model> model = std::make_shared<Model>(this);
+    //std::vector<Triangle> tris;
     for (int i = 0; i < indices.size() / 3; i++)
     {
         triangles.push_back(Triangle(this, i));
     }
+    //return tris;
 }
 
 bool Triangle::Intersect(Ray& ray, float& tHit, SurfaceInteraction& intersection) const
 {
+    if (model->vertices.size() == 0) return false;
     glm::vec3 v0 = model->vertices[v_indices[0]], v1= model->vertices[v_indices[1]], v2= model->vertices[v_indices[2]];
     glm::vec3 A = v1 - v0;
     glm::vec3 B = v2 - v0;

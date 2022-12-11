@@ -15,7 +15,7 @@ using namespace Walnut;
 class ExampleLayer : public Walnut::Layer
 {
 public:
-	ExampleLayer() : m_Camera(45.0f, 0.1f, 100.0f) {}
+	ExampleLayer() : m_Camera(45.0f, 0.1f, 1.0f) {}
 
 	virtual void OnUpdate(float ts) override {
 		if (m_Camera.OnUpdate(ts))
@@ -32,6 +32,8 @@ public:
 			Render();
 		}
 		ImGui::Checkbox("Accumulate", &m_Renderer.GetSettings().Accumulate);
+		ImGui::Checkbox("Vignette", &m_Renderer.GetSettings().Vignette);
+		ImGui::SliderFloat("Amount", &m_Renderer.GetSettings().VignetteAmount, 0.f, 20.f);
 		if (ImGui::Button("Reset"))
 		{
 			m_Renderer.Reset();
@@ -62,9 +64,9 @@ public:
 	}
 private:
 	Scene m_Scene;
+	Camera m_Camera;
 	//Whitted m_Renderer;
 	PathTracer m_Renderer;
-	Camera m_Camera;
 	uint32_t  m_ViewportHeight = 0, m_ViewportWidth = 0;
 	float m_lastRenderTime = 0.f;
 };

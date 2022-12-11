@@ -23,14 +23,19 @@ public:
 	}
 	~Texture()
 	{
-		delete data;
+		stbi_image_free(data);
 	}
 	glm::vec3 sampleImageTexture(const float& u, const float& v) const
 	{
+		if (u != u || v != v)
+		{
+			//std::cout << "bruh NAN" << std::endl;
+			return glm::vec3(0.f);
+		}
 		if (!data) return glm::vec3(0.5f, 0.1f, 1.f);
 
 		float a = glm::clamp(u, 0.f, 1.f);
-		float b = glm::clamp(v, 0.f, 1.f);
+		float b =  1 - glm::clamp(v, 0.f, 1.f);
 
 		int i = static_cast<int>(a * width);
 		int j = static_cast<int>(b * height);
@@ -39,6 +44,7 @@ public:
 		if (j >= height) j = height - 1;
 
 		auto pixel = data + j * bytesPerLine + i * rgb;
+
 
 		return glm::vec3(rgbScale * pixel[0], rgbScale * pixel[1], rgbScale * pixel[2]);
 

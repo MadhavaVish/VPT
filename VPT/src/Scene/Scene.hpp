@@ -11,6 +11,7 @@
 class Scene {
 public:
 	Scene();
+	~Scene();
 	bool Intersect(Ray& ray, float &tHit, SurfaceInteraction& intersection) const;
 	void AddMaterial(const glm::vec3 albedo, const float& ks, const float& exponent, const float& radiance, const bool& mirror, const bool& glass, const float& ior);
 	void addSphere(glm::vec3 pos, float r, int material);
@@ -18,7 +19,7 @@ public:
 	glm::vec3 getSkyColor(const Ray& ray) const;
 public:
 	std::vector<Sphere> spheres;
-	std::vector<Model> models;
+	std::vector<Model*> models;
 	std::vector<Triangle> triangles;
 	std::vector<PlaneXY> frontBack;
 	std::vector<PlaneXZ> topBottom;

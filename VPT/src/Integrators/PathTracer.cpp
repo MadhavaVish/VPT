@@ -16,7 +16,6 @@ void PathTracer::Render(const Scene& scene, const Camera& camera)
 	#pragma omp parallel for schedule(dynamic)
 	for (int y = 0; y < m_FinalImage->GetHeight(); y++)
 	{
-		#pragma omp parallel for schedule(dynamic)
 		for (int x = 0; x < m_FinalImage->GetWidth(); x++)
 		{
 			m_ActiveCamera = &camera;

@@ -48,6 +48,8 @@ public:
 	Triangle(const Model* model, int triangle) : model(model)
 	{
 		v_indices = &model->indices[3 * triangle];
+		glm::vec3 v0 = model->vertices[v_indices[0]], v1 = model->vertices[v_indices[1]], v2 = model->vertices[v_indices[2]];
+		centroid = (v0 + v1 + v2)/3.f;
 	}
 
 	bool Intersect(Ray& ray, float& tHit, SurfaceInteraction& intersection) const;
@@ -55,4 +57,5 @@ public:
 private:
 	const Model* model;
 	const uint32_t* v_indices;
+	glm::vec3 centroid;
 };

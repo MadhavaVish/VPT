@@ -9,16 +9,17 @@
 #include "Integrators/WhittedRenderer.hpp"
 #include "Integrators/PathTracer.hpp"
 #include "Utils/Camera.hpp"
+#include "Utils/Cam.hpp"
 #include <memory>
 using namespace Walnut;
 
 class ExampleLayer : public Walnut::Layer
 {
 public:
-	ExampleLayer() : m_Camera(45.0f, 0.1f, 1.0f) {}
+	ExampleLayer() {}
 
 	virtual void OnUpdate(float ts) override {
-		if (m_Camera.OnUpdate(ts))
+		if (cam.OnUpdate(ts))
 		{
 			m_Renderer.Reset();
 		}
@@ -26,11 +27,36 @@ public:
 	virtual void OnUIRender() override
 	{
 		ImGui::Begin("Settings");
+		if (ImGui::CollapsingHeader("Camera Settings"))
+		{
+			if (ImGui::SliderFloat("Focal Length", &cam.settings.focal_length, 10.f, 200.f))
+			{
+				cam.OnResize(m_ViewportWidth, m_ViewportHeight);
+				m_Renderer.Reset();
+			}
+			if (ImGui::SliderFloat("F-Stop", &cam.settings.f_stop, 0.01f, 32.f))
+			{
+				cam.OnResize(m_ViewportWidth, m_ViewportHeight);
+				m_Renderer.Reset();
+			}
+			if (ImGui::SliderFloat("Focal Distance", &cam.settings.focus_dist, 0.1f, 200.f))
+			{
+				cam.OnResize(m_ViewportWidth, m_ViewportHeight);
+				m_Renderer.Reset();
+			}
+			if (ImGui::SliderFloat("Sensor Width", &cam.settings.sensor_width, 1.f, 36.f))
+			{
+				cam.OnResize(m_ViewportWidth, m_ViewportHeight);
+				m_Renderer.Reset();
+			}
+		}
+		//ImGui::EndTabBar();
 		ImGui::Text("Last render time: %.3fms", m_lastRenderTime);
 		if (ImGui::Button("Render")) 
 		{
 			Render();
 		}
+		
 		ImGui::Checkbox("Accumulate", &m_Renderer.GetSettings().Accumulate);
 		ImGui::Checkbox("Vignette", &m_Renderer.GetSettings().Vignette);
 		ImGui::SliderFloat("Amount", &m_Renderer.GetSettings().VignetteAmount, 0.f, 20.f);
@@ -56,15 +82,16 @@ public:
 	{
 		Timer timer;
 		m_Renderer.OnResize(m_ViewportWidth, m_ViewportHeight);
-		m_Camera.OnResize(m_ViewportWidth, m_ViewportHeight);
-		m_Renderer.Render(m_Scene, m_Camera);
+		cam.OnResize(m_ViewportWidth, m_ViewportHeight);
+		m_Renderer.Render(m_Scene, cam);
 		
 		m_lastRenderTime = timer.ElapsedMillis();
 
 	}
 private:
 	Scene m_Scene;
-	Camera m_Camera;
+	//Camera m_Camera;
+	Cam cam;
 	//Whitted m_Renderer;
 	PathTracer m_Renderer;
 	uint32_t  m_ViewportHeight = 0, m_ViewportWidth = 0;

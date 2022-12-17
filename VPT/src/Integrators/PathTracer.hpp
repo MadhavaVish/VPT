@@ -3,7 +3,7 @@
 
 #include "../Utils/Camera.hpp"
 #include "../Utils/Ray.hpp"
-
+#include "../Utils/Cam.hpp"
 #include <Walnut/Image.h>
 #include <glm/glm.hpp>
 #include <memory>
@@ -19,7 +19,7 @@ public:
 	};
 	PathTracer() = default;
 
-	void Render(const Scene& scene, const Camera& camera);
+	void Render(const Scene& scene, const Cam& camera);
 	void OnResize(uint32_t width, uint32_t height);
 	void Reset() { frameIndex = 1; }
 	std::shared_ptr<Walnut::Image> GetFinalImage() const { return m_FinalImage; }
@@ -29,7 +29,7 @@ private:
 	glm::vec3 TraceRay(Ray& ray, int depth);
 private:
 	const Scene* m_ActiveScene;
-	const Camera* m_ActiveCamera;
+	const Cam* m_ActiveCamera;
 	std::shared_ptr<Walnut::Image> m_FinalImage;
 	Settings settings;
 	uint32_t* m_ImageData = nullptr;

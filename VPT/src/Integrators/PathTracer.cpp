@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include <glm/gtx/string_cast.hpp>
-void PathTracer::Render(const Scene& scene, const Camera& camera)
+void PathTracer::Render(const Scene& scene, const Cam& camera)
 {
 	m_ActiveScene = &scene;
 	if (frameIndex == 1)
@@ -19,15 +19,9 @@ void PathTracer::Render(const Scene& scene, const Camera& camera)
 		for (int x = 0; x < m_FinalImage->GetWidth(); x++)
 		{
 			m_ActiveCamera = &camera;
-			//Frame cam(m_ActiveCamera->GetDirection());
 			Ray ray;
-			//glm::vec2 rad = SampleConcentricDisc()*lensRadius;
-			//glm::vec3 lol = cam.ToLocal(glm::vec3(rad, 0.f));
-			ray.origin = m_ActiveCamera->GetPosition();
-			//ray.origin = cam.ToWorld(cam.ToLocal(ray.origin) + lol);
 			glm::vec2 randomOffset(Walnut::Random::Float(), Walnut::Random::Float());
-			ray.direction = m_ActiveCamera->getPrimaryRay(x, y, randomOffset);
-			//ray.direction = cam.ToWorld(cam.ToLocal(ray.direction) - lol);
+			ray = m_ActiveCamera->getPrimaryRay(x, y, randomOffset);
 			glm::vec3 color(TraceRay(ray,0));
 			accumulator[x + y * m_FinalImage->GetWidth()] += color;
 			glm::vec4 accumulated(glm::pow(accumulator[x + y * m_FinalImage->GetWidth()] / (float)frameIndex, glm::vec3(gamma)), 1.f);
@@ -72,6 +66,7 @@ glm::vec3 PathTracer::TraceRay(Ray& ray, int depth)
 			//rrProb = 0.5;
 			float rr = Walnut::Random::Float();
 			//rrProb = glm::min(rrProb, 0.95f);
+			//rrProb = glm::clamp(rrProb, 0.1f, 0.9f);
 			if (rr > rrProb)
 			{
 				return glm::vec3(0.f);

@@ -19,21 +19,21 @@ Scene::Scene()
 	materials.back().textureIndex = 2;
 	AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, false, false, 1.46);
 	AddMaterial({ 0.803922f, 0.803922f, 0.803922f }, 0.04f, 1, 0.f, true, false, 1.5);
-	//addSphere(glm::vec3(0.f, 0.0f, 0.f), 1.f, 3);
-	addSphere(glm::vec3(1.f, 0.0f, 0.f), 1.3f, 4);
+	addSphere(glm::vec3(1.f, 0.0f, 0.f), 0.5f, 3);
+	addSphere(glm::vec3(-1.f, 0.0f, 0.f), 0.5f, 3);
 	//addSphere(glm::vec3(0.f, 0.0f, -4.f), 1.f, 2);
-	////addWalls
-	frontBack.emplace_back(PlaneXY(-3.f, glm::vec3(0.f, 0.f, 1.f), 6));
-	frontBack.emplace_back(PlaneXY(3.f, glm::vec3(0.f, 0.f, -1.f), 6));
-	topBottom.emplace_back(PlaneXZ(-1.f, glm::vec3(0.f, 1.f, 0.f), 0));
-	topBottom.emplace_back(PlaneXZ(3.f, glm::vec3(0.f, -1.f, 0.f), 0));
-	leftRight.emplace_back(PlaneYZ(-3.f, glm::vec3(1.f, 0.f, 0.f), 1));
-	leftRight.emplace_back(PlaneYZ(3.f, glm::vec3(-1.f, 0.f, 0.f), 2));
+	//////addWalls
+	//frontBack.emplace_back(PlaneXY(-3.f, glm::vec3(0.f, 0.f, 1.f), 6));
+	//frontBack.emplace_back(PlaneXY(3.f, glm::vec3(0.f, 0.f, -1.f), 6));
+	//topBottom.emplace_back(PlaneXZ(-1.f, glm::vec3(0.f, 1.f, 0.f), 0));
+	//topBottom.emplace_back(PlaneXZ(3.f, glm::vec3(0.f, -1.f, 0.f), 0));
+	//leftRight.emplace_back(PlaneYZ(-3.f, glm::vec3(1.f, 0.f, 0.f), 1));
+	//leftRight.emplace_back(PlaneYZ(3.f, glm::vec3(-1.f, 0.f, 0.f), 2));
 	
-	glm::mat4 transform = glm::rotate(glm::mat4(1.f), glm::pi<float>() / 3, { 0.f, 1.f, 0.f });
-	transform = glm::scale(transform, glm::vec3(-1.f));
-	transform = glm::translate(transform, glm::vec3(-2.f, 0.0f, 0.f));
-	addModel("assets/pyramid.obj", Transform(glm::mat4(1.f)), 3);
+	////glm::mat4 transform = glm::rotate(glm::mat4(1.f), glm::pi<float>() / 3, { 0.f, 1.f, 0.f });
+	//glm::mat4 transform = glm::translate(glm::mat4(1.f), glm::vec3(-1.f, 0.0f, 0.f));
+	//transform = glm::scale(transform, glm::vec3(0.5f));
+	//addModel("assets/cube.obj", glm::mat4(1.f), 0);
 	//transform = glm::scale(glm::mat4(1.f), glm::vec3(1.f, 1.26f, 0.1f));
 	//transform = glm::rotate(transform, glm::pi<float>() / 2, { 1.f, 0.f, 0.f });
 	//transform = glm::translate(glm::mat4(1.f), glm::vec3(2.f, 0.f, 0.f));
@@ -125,7 +125,8 @@ void Scene::addModel(const std::string& filepath, Transform transform, int mater
 
 glm::vec3 Scene::getSkyColor(const Ray& ray) const
 {
-	float phi = std::atan2(-ray.direction.z, ray.direction.x)+glm::pi<float>();
+	//return glm::vec3(0.f);
+;	float phi = std::atan2(-ray.direction.z, ray.direction.x)+glm::pi<float>();
 	float theta = std::acos(-ray.direction.y);
 	float u = phi * glm::one_over_two_pi<float>();
 	float v = theta * glm::one_over_pi<float>();

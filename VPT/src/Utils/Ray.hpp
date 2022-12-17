@@ -1,13 +1,14 @@
 #pragma once
 #include <glm/glm.hpp>
+#include "SurfaceInteraction.hpp"
 
 class Ray {
 
 public:
-	Ray() : t_max(std::numeric_limits<float>::infinity()), time(0.f) {};
-	Ray(const glm::vec3& o, const glm::vec3& dir, float t_max = std::numeric_limits<float>::infinity(), float t = 0.f) :
-		origin(o), direction(dir), t_max(t_max), time(t) {
-
+	Ray() = default;
+	Ray(const glm::vec3& o, const glm::vec3& dir) :
+		origin(o), direction(dir), invDir(1.f/dir) {
+		
 	};
 	glm::vec3 operator()(float t) const
 	{
@@ -18,9 +19,7 @@ public:
 public:
 	glm::vec3 origin;
 	glm::vec3 direction;
-
-	float time;
-	mutable float t_max;
+	glm::vec3 invDir;
 
 };
 

@@ -4,12 +4,13 @@
 #include <iostream>
 
 #include <glm/gtx/string_cast.hpp>
-void PathTracer::Render(const Scene& scene, const Cam& camera)
+void PathTracer::Render(const Scene& scene, const Camera& camera)
 {
 	m_ActiveScene = &scene;
 	if (frameIndex == 1)
 		memset(accumulator, 0, m_FinalImage->GetWidth() * m_FinalImage->GetHeight() * sizeof(glm::vec3));
-	float gamma = 1/2.2;
+
+	float gamma = 1/2.2f;
 	float invWidth = 1.f / (float)m_FinalImage->GetWidth();
 	float invHeight = 1.f / (float)m_FinalImage->GetHeight();
 	float lensRadius = 0.008f;
@@ -22,10 +23,13 @@ void PathTracer::Render(const Scene& scene, const Cam& camera)
 			Ray ray;
 			glm::vec2 randomOffset(Walnut::Random::Float(), Walnut::Random::Float());
 			ray = m_ActiveCamera->getPrimaryRay(x, y, randomOffset);
+
 			glm::vec3 color(TraceRay(ray,0));
 			accumulator[x + y * m_FinalImage->GetWidth()] += color;
+
 			glm::vec4 accumulated(glm::pow(accumulator[x + y * m_FinalImage->GetWidth()] / (float)frameIndex, glm::vec3(gamma)), 1.f);
-			accumulated = glm::clamp(accumulated, glm::vec4(0.f), glm::vec4(1.f)) ;
+			accumulated = glm::clamp(accumulated, glm::vec4(0.f), glm::vec4(1.f));
+
 			if (settings.Vignette)
 			{
 				float exp = 1 / settings.VignetteAmount;
@@ -42,114 +46,121 @@ void PathTracer::Render(const Scene& scene, const Cam& camera)
 	else
 		Reset();
 }
-static int maxBounces = 30;
+
 glm::vec3 PathTracer::TraceRay(Ray& ray, int depth)
 {
-	
-	if (depth == maxBounces)
+	size_t maxBounces = 300;
+	glm::vec3 throughput(1.f);
+	for (size_t i = 0; i < maxBounces; i++)
 	{
-		return glm::vec3(0.f);
-	}
-	float closest = std::numeric_limits<float>::infinity();
-	glm::vec3 color(0.f);
-	SurfaceInteraction intersection;
-	if (m_ActiveScene->Intersect(ray, closest, intersection))
-	{
-		
-		Frame isect(intersection.hit_normal);
-		Material mat = m_ActiveScene->materials[intersection.material];
-		glm::vec3 hitColor = mat.albedo;
-		float rrProb = 1;
-		if (depth > 3)
+		if (depth == maxBounces)
 		{
-			rrProb = std::max({ hitColor.x, hitColor.y, hitColor.z });
-			//rrProb = 0.5;
-			float rr = Walnut::Random::Float();
-			//rrProb = glm::min(rrProb, 0.95f);
-			//rrProb = glm::clamp(rrProb, 0.1f, 0.9f);
-			if (rr > rrProb)
+			return glm::vec3(0.f);
+		}
+		//float closest = std::numeric_limits<float>::infinity();
+		glm::vec3 color(0.f);
+		Intersection isect;
+		if (m_ActiveScene->Intersect(ray, isect))
+		{
+			SurfaceInteraction interaction = m_ActiveScene->getSurfaceProperties(ray, isect);
+			Frame surf(interaction.hit_normal);
+
+			Material mat = m_ActiveScene->materials[interaction.materialIdx];
+			glm::vec3 hitColor = mat.albedo;
+			float rrProb = 1;
+			if (depth > 3)
 			{
-				return glm::vec3(0.f);
+				rrProb = std::max({ hitColor.x, hitColor.y, hitColor.z });
+				float rr = Walnut::Random::Float();
+				if (rr > rrProb)
+				{
+					return glm::vec3(0.f);
+				}
 			}
-		}
-		if (mat.textureIndex >= 0)
-		{
-			hitColor *=m_ActiveScene->textures[mat.textureIndex]->sampleImageTexture(intersection.uv.x, intersection.uv.y);
-		}
-		if (mat.radiance > 0.f)
-		{
-			return hitColor *mat.radiance;
-		}
-		if (mat.mirror)
-		{
-			glm::vec3 dir = isect.ToLocal(-ray.direction);
-			dir.x *= -1;
-			dir.y *= -1;
-			dir = isect.ToWorld(dir);
-			Ray bounce;
-			bounce.origin = ray(closest) + intersection.hit_normal*0.0001f;
-			bounce.direction = glm::normalize(dir);
-			return hitColor * TraceRay(bounce, depth+1);
-		}
-		else if (mat.glass)
-		{
-			float fres = fresnel(ray.direction, intersection.hit_normal, mat.ior);
-			if (Walnut::Random::Float() < fres)
+			if (mat.textureIndex >= 0)
 			{
-				glm::vec3 dir = isect.ToLocal(-ray.direction);
+				hitColor *= m_ActiveScene->textures[mat.textureIndex]->sampleImageTexture(interaction.uv.x, interaction.uv.y);
+			}
+			if (mat.radiance > 0.f)
+			{
+				return throughput * hitColor * mat.radiance;
+			}
+			if (mat.mirror)
+			{
+				glm::vec3 dir = surf.ToLocal(-ray.direction);
 				dir.x *= -1;
 				dir.y *= -1;
-				dir = isect.ToWorld(dir);
+				dir = surf.ToWorld(dir);
 				Ray bounce;
-				if (glm::dot(intersection.hit_normal, dir) < 0)
+				bounce.origin = ray(isect.t_hit) + interaction.hit_normal * 0.0001f;
+				bounce.direction = glm::normalize(dir);
+				ray = bounce;
+				//return hitColor * TraceRay(bounce, depth + 1);
+				throughput *= hitColor;
+				continue;
+			}
+			else if (mat.glass)
+			{
+				float fres = fresnel(ray.direction, interaction.hit_normal, mat.ior);
+				if (Walnut::Random::Float() < fres)
 				{
-					bounce.origin = ray(closest) - intersection.hit_normal * 0.0001f;
+					glm::vec3 dir = surf.ToLocal(-ray.direction);
+					dir.x *= -1;
+					dir.y *= -1;
+					dir = surf.ToWorld(dir);
+					Ray bounce;
+					if (glm::dot(interaction.hit_normal, dir) < 0)
+					{
+						bounce.origin = ray(isect.t_hit) - interaction.hit_normal * 0.0001f;
+					}
+					else
+					{
+						bounce.origin = ray(isect.t_hit) + interaction.hit_normal * 0.0001f;
+					}
+					bounce.direction = glm::normalize(dir);
+					ray = bounce;
+					//return hitColor * TraceRay(bounce, depth + 1);
+					throughput *= hitColor;
+					continue;
 				}
 				else
 				{
-					bounce.origin = ray(closest) + intersection.hit_normal * 0.0001f;
+					glm::vec3 dir = refract(ray.direction, interaction.hit_normal, mat.ior);
+					Ray bounce;
+					if (glm::dot(interaction.hit_normal, dir) < 0)
+					{
+						bounce.origin = ray(isect.t_hit) - interaction.hit_normal * 0.0001f;
+					}
+					else
+					{
+						bounce.origin = ray(isect.t_hit) + interaction.hit_normal * 0.0001f;
+					}
+					bounce.direction = glm::normalize(dir);
+					ray = bounce;
+					//return hitColor * TraceRay(bounce, depth + 1);
+					throughput *= hitColor;
+					continue;
 				}
-				bounce.direction = glm::normalize(dir);
-				return hitColor * TraceRay(bounce, depth + 1);
 			}
 			else
 			{
-				glm::vec3 dir = refract(ray.direction, intersection.hit_normal, mat.ior);
+				float pdf;
+				glm::vec3 dir = sampleCosineHemisphere(pdf);
+				dir = surf.ToWorld(dir);
 				Ray bounce;
-				if (glm::dot(intersection.hit_normal, dir) < 0)
-				{
-					bounce.origin = ray(closest) - intersection.hit_normal * 0.0001f;
-				}
-				else
-				{
-					bounce.origin = ray(closest) + intersection.hit_normal * 0.0001f;
-				}
+				bounce.origin = ray(isect.t_hit) + interaction.hit_normal * 0.0001f;
 				bounce.direction = glm::normalize(dir);
-				return hitColor * TraceRay(bounce, depth + 1);
+				glm::vec3 diffuse = glm::one_over_pi<float>() * hitColor * glm::dot(interaction.hit_normal, dir) / (pdf * rrProb);
+				//return TraceRay(bounce, depth + 1) * throughput;
+				ray = bounce;
+				throughput *= diffuse;
+				continue;
 			}
 		}
 		else
 		{
-			//float pdf;
-			//glm::vec3 dir = SampleUniformHemisphere(pdf);
-			//dir = isect.ToWorld(dir);
-			//Ray bounce;
-			//bounce.origin = ray(closest) + intersection.hit_normal * 0.0001f;
-			//bounce.direction = glm::normalize(dir);
-			//return 2.f * hitColor * glm::dot(intersection.hit_normal, dir) * TraceRay(bounce, depth + 1);
-			float pdf;
-			glm::vec3 dir = sampleCosineHemisphere(pdf);
-			dir = isect.ToWorld(dir);
-			Ray bounce;
-			bounce.origin = ray(closest) + intersection.hit_normal * 0.0001f;
-			bounce.direction = glm::normalize(dir);
-			glm:: vec3 throughput = glm::one_over_pi<float>() * hitColor * glm::dot(intersection.hit_normal, dir) / (pdf * rrProb);
-			return TraceRay(bounce, depth + 1) * throughput;
+			return throughput * m_ActiveScene->getSkyColor(ray);
 		}
-	}
-	else
-	{
-		return m_ActiveScene->getSkyColor(ray);
 	}
 }
 

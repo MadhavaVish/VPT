@@ -6,10 +6,10 @@
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #define GLM_FORCE_AVX
 
-#include "Integrators/WhittedRenderer.hpp"
+//#include "Integrators/WhittedRenderer.hpp"
 #include "Integrators/PathTracer.hpp"
 #include "Utils/Camera.hpp"
-#include "Utils/Cam.hpp"
+#include "Utils/Camera.hpp"
 #include <memory>
 using namespace Walnut;
 
@@ -90,8 +90,7 @@ public:
 	}
 private:
 	Scene m_Scene;
-	//Camera m_Camera;
-	Cam cam;
+	Camera cam;
 	//Whitted m_Renderer;
 	PathTracer m_Renderer;
 	uint32_t  m_ViewportHeight = 0, m_ViewportWidth = 0;

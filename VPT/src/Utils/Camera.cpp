@@ -1,20 +1,17 @@
 #include "Camera.hpp"
-
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 
 #include <Walnut/Input/Input.h>
-
+#include "../Scene/Materials/Material.hpp"
 using namespace Walnut;
 
-Camera::Camera(float verticalFOV, float nearClip, float farClip)
-	: m_VerticalFOV(verticalFOV), m_NearClip(nearClip), m_FarClip(farClip)
+Camera::Camera(float fov) :m_VerticalFOV(fov)
 {
-	m_ForwardDirection = glm::vec3(0, 0, -1);
-	m_Position = glm::vec3(0, 1, 5);
+	forwardDir = glm::vec3(0.f, 0.f, -1.f);
+	position = glm::vec3(0.f, 0.f, 7.f);
 }
-
 bool Camera::OnUpdate(float ts)
 {
 	glm::vec2 mousePos = Input::GetMousePosition();
@@ -32,39 +29,39 @@ bool Camera::OnUpdate(float ts)
 	bool moved = false;
 
 	constexpr glm::vec3 upDirection(0.0f, 1.0f, 0.0f);
-	glm::vec3 rightDirection = glm::cross(m_ForwardDirection, upDirection);
+	glm::vec3 rightDirection = glm::cross(forwardDir, upDirection);
 
 	float speed = 5.0f;
 
 	// Movement
 	if (Input::IsKeyDown(KeyCode::W))
 	{
-		m_Position += m_ForwardDirection * speed * ts;
+		position += forwardDir * speed * ts;
 		moved = true;
 	}
 	else if (Input::IsKeyDown(KeyCode::S))
 	{
-		m_Position -= m_ForwardDirection * speed * ts;
+		position -= forwardDir * speed * ts;
 		moved = true;
 	}
 	if (Input::IsKeyDown(KeyCode::A))
 	{
-		m_Position -= rightDirection * speed * ts;
+		position -= rightDirection * speed * ts;
 		moved = true;
 	}
 	else if (Input::IsKeyDown(KeyCode::D))
 	{
-		m_Position += rightDirection * speed * ts;
+		position += rightDirection * speed * ts;
 		moved = true;
 	}
 	if (Input::IsKeyDown(KeyCode::Q))
 	{
-		m_Position -= upDirection * speed * ts;
+		position -= _y * speed * ts;
 		moved = true;
 	}
 	else if (Input::IsKeyDown(KeyCode::E))
 	{
-		m_Position += upDirection * speed * ts;
+		position += _y * speed * ts;
 		moved = true;
 	}
 
@@ -72,11 +69,11 @@ bool Camera::OnUpdate(float ts)
 	if (delta.x != 0.0f || delta.y != 0.0f)
 	{
 		float pitchDelta = delta.y * GetRotationSpeed();
-		float yawDelta = delta.x * GetRotationSpeed();
+		float yawDelta = delta.x * -GetRotationSpeed();
 
 		glm::quat q = glm::normalize(glm::cross(glm::angleAxis(-pitchDelta, rightDirection),
-			glm::angleAxis(-yawDelta, glm::vec3(0.f, 1.0f, 0.0f))));
-		m_ForwardDirection = glm::rotate(q, m_ForwardDirection);
+			glm::angleAxis(-yawDelta, _y)));
+		forwardDir = glm::rotate(q, forwardDir);
 
 		moved = true;
 	}
@@ -90,39 +87,42 @@ bool Camera::OnUpdate(float ts)
 
 void Camera::OnResize(uint32_t width, uint32_t height)
 {
-	if (width == m_ViewportWidth && height == m_ViewportHeight)
-		return;
-
+	//if (width == m_ViewportWidth && height == m_ViewportHeight)
+		//return;
 	m_ViewportWidth = width;
 	m_ViewportHeight = height;
-
-	RecalculateProjection();
+	aspect = (float)m_ViewportHeight/ (float)m_ViewportWidth;
+	RecalculateView();
 }
-
-
-float Camera::GetRotationSpeed()
+const Ray Camera::getPrimaryRay(const int x, const int y, const glm::vec2 offset) const
 {
-	return 0.3f;
-}
+	float u = (x + offset.x) / (float)m_ViewportWidth;
+	float v = (y + offset.y) / (float)m_ViewportHeight;
+	u = u * 2 - 1;
+	v = v * 2 - 1;
+	glm::vec3 defocus{ 0.f };
+	if (settings.f_stop < 30.f)
+	{
+		//glm::vec2 rad{ Walnut::Random::Float()-0.5f, Walnut::Random::Float() - 0.5f };
+		//rad *= aperture;
+		glm::vec2 rad = SampleConcentricDisc() * aperture;
+		defocus = _x * rad.x + _y * rad.y;
 
-void Camera::RecalculateProjection()
-{
-	m_Projection = glm::perspectiveFov(glm::radians(m_VerticalFOV), (float)m_ViewportWidth, (float)m_ViewportHeight, m_NearClip, m_FarClip);
-	m_InverseProjection = glm::inverse(m_Projection);
+	}
+	glm::vec3 dir = glm::normalize(glm::normalize(forwardDir * settings.focus_dist + u * horizontal - v * vertical) * settings.focus_dist - defocus);
+	return Ray(position + defocus, dir);;
 }
-
 void Camera::RecalculateView()
 {
-	m_View = glm::lookAt(m_Position, m_Position + m_ForwardDirection, glm::vec3(0, 1, 0));
-	m_InverseView = glm::inverse(m_View);
-}
+	float w = settings.sensor_width*0.001 / (2 * settings.focal_length * 0.001);
+	aperture = 0.5f * settings.focal_length * 0.001 / settings.f_stop;
+	float width = 2 * w;
+	float height = aspect * width;
 
-const glm::vec3 Camera::getPrimaryRay(const int x, const int y, const glm::vec2 offset) const
-{
-	glm::vec2 coord = { (x+offset.x) / (float)m_ViewportWidth,(y+offset.y) / (float)m_ViewportHeight };
-	coord = (coord ) * 2.0f - 1.0f ; // -1 -> 1
+	_z = forwardDir;
+	_x = glm::normalize(glm::cross(_z, { 0.f, 1.f, 0.f }));
+	_y = glm::cross(_z, _x);
 
-	glm::vec4 target = m_InverseProjection * glm::vec4(coord.x, coord.y, 0, 1);
-	glm::vec3 rayDirection = glm::vec3(m_InverseView * glm::vec4(glm::normalize(glm::vec3(target) / target.w), 0)); // World space
-	return rayDirection;
+	horizontal = settings.focus_dist * width * _x/2.f;
+	vertical = settings.focus_dist * height * _y/2.f;
 }

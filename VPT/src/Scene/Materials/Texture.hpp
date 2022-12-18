@@ -29,7 +29,6 @@ public:
 	{
 		if (u != u || v != v)
 		{
-			//std::cout << "bruh NAN" << std::endl;
 			return glm::vec3(0.f);
 		}
 		if (!data) return glm::vec3(0.5f, 0.1f, 1.f);

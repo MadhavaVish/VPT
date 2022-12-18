@@ -16,7 +16,7 @@ namespace std
         }
     };
 }
-Model::Model(const std::string& filepath, Transform transform, int materialIdx) : transformation(transform), materialIndex(materialIdx)
+Model::Model(const std::string& filepath, Transform transform, const uint32_t materialIdx) : transformation(transform), material(materialIdx)
 {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
@@ -61,30 +61,26 @@ Model::Model(const std::string& filepath, Transform transform, int materialIdx) 
             if (uniqueVertices.count(vertex) == 0) {
                 uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
                 vertices.push_back(glm::vec3(transform.objToWorld * glm::vec4(vertex.position, 1.f)));
-                normals.push_back(glm::vec3(inverseTranspose * glm::vec4(vertex.normal, 0.f)));
+                normals.push_back(glm::normalize(glm::vec3(inverseTranspose * glm::vec4(vertex.normal, 0.f))));
                 uvs.push_back(vertex.uv);
             }
             indices.push_back(uniqueVertices[vertex]);
 		}
-        /*for (auto v : vertices)
-        {
-            std::cout << v.x << v.y << v.z << std::endl;
-        }*/
 	}
 }
 
-void Model::GetTriangles(std::vector<Triangle>& triangles) const
+std::vector<Triangle> Model::GetTriangles() const
 {
-    //std::shared_ptr<Model> model = std::make_shared<Model>(this);
-    //std::vector<Triangle> tris;
-    for (int i = 0; i < indices.size() / 3; i++)
+    std::vector<Triangle> tris;
+    tris.reserve(numTriangles());
+    for (uint32_t i = 0; i < numTriangles(); i++)
     {
-        triangles.push_back(Triangle(this, i));
+        tris.emplace_back(Triangle(this, i));
     }
-    //return tris;
+    return tris;
 }
 
-bool Triangle::Intersect(Ray& ray, float& tHit, SurfaceInteraction& intersection) const
+bool Triangle::Intersect(Ray& ray, Intersection& isect) const
 {
     if (model->vertices.size() == 0) return false;
     glm::vec3 v0 = model->vertices[v_indices[0]], v1= model->vertices[v_indices[1]], v2= model->vertices[v_indices[2]];
@@ -104,14 +100,23 @@ bool Triangle::Intersect(Ray& ray, float& tHit, SurfaceInteraction& intersection
     if (v < 0 || u + v > 1) return false;
 
     float t = glm::dot(B, qvec) * invDeterminant;
-    if (t < tHit && t > 0)
+    if (t < isect.t_hit && t > 0)
     {
-        tHit = t;
-        intersection.hit_normal = (1 - u - v) * model->normals[v_indices[0]] + u * model->normals[v_indices[1]] + v * model->normals[v_indices[2]];
-        intersection.uv = (1 - u - v) * model->uvs[v_indices[0]] + u * model->uvs[v_indices[1]] + v * model->uvs[v_indices[2]];
-        intersection.material = model->materialIndex;
+        isect.t_hit = t;
+        isect.barycentric = glm::vec2(u, v);
         return true;
 
     }
     return false;
+}
+
+SurfaceInteraction Triangle::getSurfaceProperties(const Ray& ray, const Intersection& isect) const
+{
+    SurfaceInteraction interaction;
+    interaction.materialIdx = model->material;
+    float u = isect.barycentric.x;
+    float v = isect.barycentric.y;
+    interaction.hit_normal = (1 - u - v) * model->normals[v_indices[0]] + u * model->normals[v_indices[1]] + v * model->normals[v_indices[2]];
+    interaction.uv = (1 - u - v) * model->uvs[v_indices[0]] + u * model->uvs[v_indices[1]] + v * model->uvs[v_indices[2]];
+    return interaction;
 }

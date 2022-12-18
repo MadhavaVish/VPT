@@ -4,7 +4,7 @@
 #include "../../Utils/SurfaceInteraction.hpp"
 #include "../../Utils/Intersection.hpp"
 #include "../../Utils/Transform.hpp"
-
+#include "../AABB.hpp"
 class Plane{
 public:
 
@@ -12,9 +12,10 @@ public:
 
 	bool Intersect(Ray& ray, Intersection& isect) const;
 	SurfaceInteraction getSurfaceProperties(const Ray& ray, const Intersection& isect) const;
-private:
+	AABB getBounds();
 	glm::vec3 normal;
 	float distance;
+private:
 	uint32_t material;
 	Frame local;
 };

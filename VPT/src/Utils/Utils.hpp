@@ -13,3 +13,21 @@ namespace Utils {
 		return result;
 	}
 }
+//uint RandomUInt(uint& seed)
+//{
+//	seed ^= seed << 13;
+//	seed ^= seed >> 17;
+//	seed ^= seed << 5;
+//	return seed;
+//}
+//float RandomFloat(uint& seed) { return RandomUInt(seed) * 2.3283064365387e-10f; }
+static unsigned int seed = 0x12345678;
+
+static unsigned int RandomUInt()
+{
+	seed ^= seed << 13;
+	seed ^= seed >> 17;
+	seed ^= seed << 5;
+	return seed;
+}
+static float RandomFloat() { return RandomUInt() * 2.3283064365387e-10f; }

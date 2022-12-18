@@ -9,6 +9,7 @@
 #include "../../Utils/Ray.hpp"
 #include "../../Utils/SurfaceInteraction.hpp"
 #include "../../Utils/Intersection.hpp"
+#include "../AABB.hpp"
 template <typename T, typename... Rest>
 void hashCombine(std::size_t& seed, const T& v, const Rest&... rest) {
 	seed ^= std::hash<T>{}(v)+0x9e3779b9 + (seed << 6) + (seed >> 2);
@@ -55,11 +56,12 @@ public:
 		glm::vec3 v0 = model->vertices[v_indices[0]], v1 = model->vertices[v_indices[1]], v2 = model->vertices[v_indices[2]];
 		centroid = (v0 + v1 + v2)/3.f;
 	}
-
+	
 	bool Intersect(Ray& ray, Intersection& isect) const;
 	SurfaceInteraction getSurfaceProperties(const Ray& ray, const Intersection& isect) const;
+	AABB getBounds();
+	glm::vec3 centroid;
 private:
 	const Model* model;
 	const uint32_t* v_indices;
-	glm::vec3 centroid;
 };

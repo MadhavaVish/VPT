@@ -1,41 +1,29 @@
 #pragma once
 #include <glm/glm.hpp>
 #include "../Utils/Ray.hpp"
+
+
 struct BVHNode
 {
-	union { struct { glm::vec3 aabbMin; uint32_t leftFirst; }; __m128 aabbMin4; };
-	union { struct { glm::vec3 aabbMax; uint32_t triCount; }; __m128 aabbMax4; };
-	bool isLeaf() const { return triCount > 0; } // empty BVH leaves do not exist
-	float CalculateNodeCost()
-	{
-		glm::vec3 e = aabbMax - aabbMin; // extent of the node
-		return (e.x * e.y + e.y * e.z + e.z * e.x) * triCount;
-	}
+	union { struct { glm::vec3 aabbMin; unsigned int leftFirst; }; __m128 aabbMin4; };
+	union { struct { glm::vec3 aabbMax; unsigned int triCount; }; __m128 aabbMax4; };
+	bool isLeaf() { return triCount > 0; }
 };
-
-__declspec(align(64)) class BVH
+void BuildBVH()
 {
-	struct BuildJob
-	{
-		uint32_t nodeIdx;
-		glm::vec3 centroidMin, centroidMax;
-	};
-public:
-	BVH() = default;
-	BVH(class Mesh* mesh);
-	void Build();
-	void Refit();
-	void Intersect(Ray& ray, uint32_t instanceIdx);
-private:
-	void Subdivide(uint32_t nodeIdx, uint32_t depth, uint32_t& nodePtr, glm::vec3& centroidMin, glm::vec3& centroidMax);
-	void UpdateNodeBounds(uint32_t nodeIdx, glm::vec3& centroidMin, glm::vec3& centroidMax);
-	float FindBestSplitPlane(BVHNode& node, int& axis, int& splitPos, glm::vec3& centroidMin, glm::vec3& centroidMax);
-	class Mesh* mesh = 0;
-public:
-	uint32_t* triIdx = 0;
-	uint32_t nodesUsed;
-	BVHNode* bvhNode = 0;
-	bool subdivToOnePrim = false; // for TLAS experiment
-	BuildJob buildStack[64];
-	int buildStackPtr;
-};
+	// create the BVH node pool
+	bvhNode = (BVHNode*)_aligned_malloc(sizeof(BVHNode) * N * 2, 64);
+	// populate triangle index array
+	for (int i = 0; i < N; i++) triIdx[i] = i;
+	// calculate triangle centroids for partitioning
+	for (int i = 0; i < N; i++)
+		tri[i].centroid = (tri[i].vertex0 + tri[i].vertex1 + tri[i].vertex2) * 0.3333f;
+	// assign all triangles to root node
+	BVHNode& root = bvhNode[rootNodeIdx];
+	root.leftFirst = 0, root.triCount = N;
+	UpdateNodeBounds(rootNodeIdx);
+	// subdivide recursively
+	Timer t;
+	Subdivide(rootNodeIdx);
+	printf("BVH (%i nodes) constructed in %.2fms.\n", nodesUsed, t.elapsed() * 1000);
+}

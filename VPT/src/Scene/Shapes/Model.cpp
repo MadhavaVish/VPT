@@ -120,3 +120,12 @@ SurfaceInteraction Triangle::getSurfaceProperties(const Ray& ray, const Intersec
     interaction.uv = (1 - u - v) * model->uvs[v_indices[0]] + u * model->uvs[v_indices[1]] + v * model->uvs[v_indices[2]];
     return interaction;
 }
+AABB Triangle::getBounds()
+{
+    AABB bound;
+    glm::vec3 v0 = model->vertices[v_indices[0]], v1 = model->vertices[v_indices[1]], v2 = model->vertices[v_indices[2]];
+    bound.grow(v0);
+    bound.grow(v1);
+    bound.grow(v2);
+    return bound;
+}

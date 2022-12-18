@@ -46,7 +46,6 @@ void PathTracer::Render(const Scene& scene, const Camera& camera)
 	else
 		Reset();
 }
-
 glm::vec3 PathTracer::TraceRay(Ray& ray, int depth)
 {
 	size_t maxBounces = 300;
@@ -57,7 +56,6 @@ glm::vec3 PathTracer::TraceRay(Ray& ray, int depth)
 		{
 			return glm::vec3(0.f);
 		}
-		//float closest = std::numeric_limits<float>::infinity();
 		glm::vec3 color(0.f);
 		Intersection isect;
 		if (m_ActiveScene->Intersect(ray, isect))
@@ -71,7 +69,7 @@ glm::vec3 PathTracer::TraceRay(Ray& ray, int depth)
 			if (depth > 3)
 			{
 				rrProb = std::max({ hitColor.x, hitColor.y, hitColor.z });
-				float rr = Walnut::Random::Float();
+				float rr = RandomFloat();
 				if (rr > rrProb)
 				{
 					return glm::vec3(0.f);
@@ -91,24 +89,23 @@ glm::vec3 PathTracer::TraceRay(Ray& ray, int depth)
 				dir.x *= -1;
 				dir.y *= -1;
 				dir = surf.ToWorld(dir);
-				Ray bounce;
+				Ray bounce(glm::normalize(dir));
 				bounce.origin = ray(isect.t_hit) + interaction.hit_normal * 0.0001f;
-				bounce.direction = glm::normalize(dir);
+				//bounce.direction = glm::normalize(dir);
 				ray = bounce;
-				//return hitColor * TraceRay(bounce, depth + 1);
 				throughput *= hitColor;
 				continue;
 			}
 			else if (mat.glass)
 			{
 				float fres = fresnel(ray.direction, interaction.hit_normal, mat.ior);
-				if (Walnut::Random::Float() < fres)
+				if (RandomFloat() < fres)
 				{
 					glm::vec3 dir = surf.ToLocal(-ray.direction);
 					dir.x *= -1;
 					dir.y *= -1;
 					dir = surf.ToWorld(dir);
-					Ray bounce;
+					Ray bounce(glm::normalize(dir));
 					if (glm::dot(interaction.hit_normal, dir) < 0)
 					{
 						bounce.origin = ray(isect.t_hit) - interaction.hit_normal * 0.0001f;
@@ -117,16 +114,15 @@ glm::vec3 PathTracer::TraceRay(Ray& ray, int depth)
 					{
 						bounce.origin = ray(isect.t_hit) + interaction.hit_normal * 0.0001f;
 					}
-					bounce.direction = glm::normalize(dir);
+					//bounce.direction = glm::normalize(dir);
 					ray = bounce;
-					//return hitColor * TraceRay(bounce, depth + 1);
 					throughput *= hitColor;
 					continue;
 				}
 				else
 				{
 					glm::vec3 dir = refract(ray.direction, interaction.hit_normal, mat.ior);
-					Ray bounce;
+					Ray bounce(glm::normalize(dir));
 					if (glm::dot(interaction.hit_normal, dir) < 0)
 					{
 						bounce.origin = ray(isect.t_hit) - interaction.hit_normal * 0.0001f;
@@ -135,9 +131,8 @@ glm::vec3 PathTracer::TraceRay(Ray& ray, int depth)
 					{
 						bounce.origin = ray(isect.t_hit) + interaction.hit_normal * 0.0001f;
 					}
-					bounce.direction = glm::normalize(dir);
+					//bounce.direction = glm::normalize(dir);
 					ray = bounce;
-					//return hitColor * TraceRay(bounce, depth + 1);
 					throughput *= hitColor;
 					continue;
 				}
@@ -147,11 +142,10 @@ glm::vec3 PathTracer::TraceRay(Ray& ray, int depth)
 				float pdf;
 				glm::vec3 dir = sampleCosineHemisphere(pdf);
 				dir = surf.ToWorld(dir);
-				Ray bounce;
+				Ray bounce(glm::normalize(dir));
 				bounce.origin = ray(isect.t_hit) + interaction.hit_normal * 0.0001f;
-				bounce.direction = glm::normalize(dir);
+				//bounce.direction = glm::normalize(dir);
 				glm::vec3 diffuse = glm::one_over_pi<float>() * hitColor * glm::dot(interaction.hit_normal, dir) / (pdf * rrProb);
-				//return TraceRay(bounce, depth + 1) * throughput;
 				ray = bounce;
 				throughput *= diffuse;
 				continue;

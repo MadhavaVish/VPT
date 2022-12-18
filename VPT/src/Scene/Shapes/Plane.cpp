@@ -1,7 +1,7 @@
 #include "Plane.hpp"
 #include <glm/gtx/common.hpp>
 
-Plane::Plane(const glm::vec3 n, const float d, const uint32_t materialIdx) : normal(n), distance(d), local(Frame(normal)), material(materialIdx)
+Plane::Plane(const glm::vec3 n, const float d, const uint32_t materialIdx) : normal(glm::normalize(n)), distance(d), local(Frame(normal)), material(materialIdx)
 {};
 
 bool Plane::Intersect(Ray& ray, Intersection& isect) const
@@ -24,4 +24,13 @@ SurfaceInteraction Plane::getSurfaceProperties(const Ray& ray, const Intersectio
 	interaction.uv.x = glm::fmod(abs(rayLocal.x), 1.f);
 	interaction.uv.y = glm::fmod(abs(rayLocal.y), 1.f);
 	return interaction;
+}
+AABB Plane::getBounds()
+{
+	AABB bound;
+	glm::vec3 corner = local.m_X * 100.f + local.m_Y * 100.f;
+	glm::vec3 center = normal * distance;
+	bound.grow(center - corner);
+	bound.grow(center + corner);
+	return bound;
 }

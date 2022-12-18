@@ -44,3 +44,11 @@ SurfaceInteraction Sphere::getSurfaceProperties(const Ray& ray, const Intersecti
 	interaction.uv = getUVCoords(interaction.hit_normal);
 	return interaction;
 }
+
+AABB Sphere::getBounds()
+{
+	AABB bound;
+	bound.grow(glm::vec3(position-radius));
+	bound.grow(glm::vec3(position+radius));
+	return bound;
+}

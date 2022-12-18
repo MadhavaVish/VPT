@@ -30,6 +30,14 @@ private:
 			Plane plane;
 		};
 	};
+
+	struct BVHNode
+	{
+		union { struct { glm::vec3 aabbMin; unsigned int leftFirst; }; __m128 aabbMin4; };
+		union { struct { glm::vec3 aabbMax; unsigned int triCount; }; __m128 aabbMax4; };
+		bool isLeaf() { return triCount > 0; }
+	};
+	struct Bin { AABB bounds; int triCount = 0; };
 public:
 	Scene();
 	~Scene();
@@ -41,6 +49,13 @@ public:
 	void addModel(const std::string& filepath, Transform transform, uint32_t material);
 	void addSphere(glm::vec3 pos, float r, uint32_t material);
 	void addPlane(glm::vec3 normal, float dist, uint32_t material);
+private:
+	void BuildBVH();
+	void Subdivide(unsigned int nodeIdx);
+	void UpdateNodeBounds(unsigned int nodeIdx);
+	float FindBestSplitPlane(BVHNode& node, int& axis, float& splitPos);
+	float CalculateNodeCost(BVHNode& node);
+	bool IntersectBVH(Ray& ray, Intersection& isect) const;
 public:
 	std::vector<Model*> models;
 	std::vector<Shape> shapes;
@@ -48,4 +63,7 @@ public:
 	std::vector<Texture*> textures;
 private:
 	uint32_t skyboxIndex;
+	std::vector<unsigned int> triIdx;
+	BVHNode* bvhNode = 0;
+	unsigned int rootNodeIdx = 0, nodesUsed = 2;
 };

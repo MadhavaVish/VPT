@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include "../../Utils/Ray.hpp"
+#include "../../Utils/Utils.hpp"
 #include <Walnut/Random.h>
 #include <glm/gtc/constants.hpp>
 
@@ -17,8 +18,8 @@ struct Material {
 
 static glm::vec3 sampleCosineHemisphere(float& pdf)
 {
-	float a = glm::two_pi<float>() * Walnut::Random::Float();
-	float b = Walnut::Random::Float();
+	float a = glm::two_pi<float>() * RandomFloat();
+	float b = RandomFloat();
 	float c = glm::sqrt(1 - b);
 	float d = glm::sqrt(b);
 	pdf = d * glm::one_over_pi<float>();
@@ -63,8 +64,8 @@ static glm::vec3 reflect(const glm::vec3& incident, const glm::vec3& normal)
 
 static glm::vec3 SampleUniformHemisphere(float& pdf)
 {
-	float a = Walnut::Random::Float();
-	float b = Walnut::Random::Float();
+	float a = RandomFloat();
+	float b = RandomFloat();
 	float cosTheta = a;
 	float sinTheta = glm::sqrt(1 - cosTheta * cosTheta);
 	float cosPhi = glm::cos(glm::two_pi<float>() * b);
@@ -94,8 +95,8 @@ static glm::vec2 SampleConcentricDisc()
 {
 	float phi, r;
 
-	float a = 2 * Walnut::Random::Float() - 1;   /* (a,b) is now on [-1,1]^2 */
-	float b = 2 * Walnut::Random::Float() - 1;
+	float a = 2 * RandomFloat() - 1;   /* (a,b) is now on [-1,1]^2 */
+	float b = 2 * RandomFloat() - 1;
 
 	if (a > -b)      /* region 1 or 2 */
 	{

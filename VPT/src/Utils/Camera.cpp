@@ -10,7 +10,7 @@ using namespace Walnut;
 Camera::Camera(float fov) :m_VerticalFOV(fov)
 {
 	forwardDir = glm::vec3(0.f, 0.f, -1.f);
-	position = glm::vec3(0.f, 0.f, 7.f);
+	position = glm::vec3(0.f, 1.f, 7.f);
 }
 bool Camera::OnUpdate(float ts)
 {

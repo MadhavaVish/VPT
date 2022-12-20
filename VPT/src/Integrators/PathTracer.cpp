@@ -17,7 +17,7 @@ void PathTracer::Render(const Scene& scene, const Camera& camera)
 	#pragma omp parallel for schedule(dynamic)
 	for (int y = 0; y < m_FinalImage->GetHeight(); y++)
 	{
-		for (int x = 0; x < m_FinalImage->GetWidth(); x++)
+		for (uint32_t x = 0; x < m_FinalImage->GetWidth(); x++)
 		{
 			m_ActiveCamera = &camera;
 			Ray ray;
@@ -144,6 +144,7 @@ glm::vec3 PathTracer::TraceRay(Ray& ray, int depth)
 			return throughput * m_ActiveScene->getSkyColor(ray);
 		}
 	}
+	return glm::vec3(0.f);
 }
 
 void PathTracer::OnResize(uint32_t width, uint32_t height)

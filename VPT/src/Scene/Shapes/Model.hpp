@@ -34,7 +34,7 @@ public:
 	std::vector<Triangle> GetTriangles() const;
 	uint32_t numTriangles() const
 	{
-		return indices.size() / 3;
+		return static_cast<uint32_t>(indices.size()) / 3;
 	}
 
 private:

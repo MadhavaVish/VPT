@@ -7,18 +7,18 @@
 #include <immintrin.h>
 Scene::Scene()
 {
-	textures.push_back(new Texture("assets/rain.hdr"));
+	textures.push_back(new Texture("assets/skydome.hdr"));
 	skyboxIndex = 0;
-	textures.push_back(new Texture("assets/plant.jpg"));
-	textures.push_back(new Texture("assets/rockAlbedo.jpg"));
-	AddMaterial({ 0.803922f, 0.803922f, 0.803922f }, 0.04f, 1, 0.f, true, false, 1.5f);
+/*	textures.push_back(new Texture("assets/plant.jpg"));
+	textures.push_back(new Texture("assets/rockAlbedo.jpg"))*/;
+	AddMaterial({ 0.803922f, 0.803922f, 0.803922f }, 0.04f, 1, 0.f, false, false, 1.5f);
 	//materials.back().textureIndex = 1;
-	AddMaterial({ 0.156863f, 0.803922f, 0.172549f }, 0.04f, 1, 0.f, false, false, 1.5f);
+	AddMaterial({ 0.156863f, 0.803922f, 0.172549f }, 0.04f, 1, 0.f, false, true, 1.5f);
 	AddMaterial({ 0.803922f, 0.152941f, 0.152941f }, 0.04f, 1, 0.f, false, false, 1.5f);
 	AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, false, false, 1.5f);
-	materials.back().textureIndex = 1;
+	//materials.back().textureIndex = 1;
 	AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, false, false, 1.33f);
-	materials.back().textureIndex = 2;
+	//materials.back().textureIndex = 2;
 	AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, false, false, 1.46f);
 	AddMaterial({ 0.803922f, 0.803922f, 0.803922f }, 0.04f, 1, 0.f, false, true, 1.5f);
 	//addSphere(glm::vec3(0.f, -200.f, 0.f), 200.f, 6);
@@ -31,9 +31,9 @@ Scene::Scene()
 	//addModel("assets/rock.obj", transform, 4);
 	transform = glm::translate(glm::mat4(2.f), glm::vec3(0.f, 0.f, 0.f));
 	//addModel("assets/rock.obj", transform, 4);
-	transform = glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -3.6f, 0.f));
-	transform = glm::scale(transform, glm::vec3(0.2f));
-	addModel("assets/bunny2.obj", transform, 3);
+	transform = glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -0.f, 0.f));
+	transform = glm::scale(transform, glm::vec3(1.f));
+	addModel("assets/bunny2.obj", transform, 1);
 	//addPlane({ 0.f, 0.f, 1.f }, 3.f, 0);
 	//addPlane({ 0.f, 0.f, -1.f }, 8.f, 0);
 	//addPlane({ 0.f, 1.f, 0.f }, -0.1f, 0);
@@ -43,9 +43,10 @@ Scene::Scene()
 	//addModel("assets/Cornell/Left.obj", glm::mat4(1.f), 1);
 	//addModel("assets/Cornell/Right.obj", glm::mat4(1.f), 2);
 	//addModel("assets/Cornell/Top.obj", glm::mat4(1.f), 0);
-	addModel("assets/Cornell/Bottom.obj", glm::mat4(1.f), 0);
+	transform = glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 3.6f, 0.f));
+	addModel("assets/Cornell/Bottom.obj", transform, 0);
 	//addModel("assets/Cornell/Back.obj", glm::mat4(1.f), 0);
-	for (size_t i = 0; i < shapes.size(); i++)
+	for (unsigned int i = 0; i < shapes.size(); i++)
 	{
 		triIdx.push_back(i);
 	}
@@ -108,6 +109,8 @@ SurfaceInteraction Scene::getSurfaceProperties(const Ray& ray, const Intersectio
 	case ShapeType::Plane:
 		return shapes[isect.objIdx].plane.getSurfaceProperties(ray, isect);
 		break;
+	default:
+		break;
 	}
 }
 void Scene::AddMaterial(const glm::vec3 albedo, const float& ks, const float& exponent, const float &radiance, const bool &mirror, const bool &glass, const float &ior)
@@ -153,11 +156,11 @@ glm::vec3 Scene::getSkyColor(const Ray& ray) const
 
 void Scene::BuildBVH()
 {
-	unsigned int N = shapes.size();
+	unsigned int N = static_cast<unsigned int>(shapes.size());
 	// create the BVH node pool
 	bvhNode = (BVHNode*)_aligned_malloc(sizeof(BVHNode) * N * 2, 64);
 	// populate triangle index array
-	for (int i = 0; i < N; i++) triIdx[i] = i;
+	for (unsigned int i = 0; i < N; i++) triIdx[i] = i;
 	// assign all triangles to root node
 	BVHNode& root = bvhNode[rootNodeIdx];
 	root.leftFirst = 0, root.triCount = N;

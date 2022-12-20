@@ -8,6 +8,7 @@
 
 //#include "Integrators/WhittedRenderer.hpp"
 #include "Integrators/PathTracer.hpp"
+#include "Integrators/WhittedRenderer.hpp"
 #include "Utils/Camera.hpp"
 #include "Utils/Camera.hpp"
 #include <memory>
@@ -58,8 +59,8 @@ public:
 		}
 		
 		ImGui::Checkbox("Accumulate", &m_Renderer.GetSettings().Accumulate);
-		ImGui::Checkbox("Vignette", &m_Renderer.GetSettings().Vignette);
-		ImGui::SliderFloat("Amount", &m_Renderer.GetSettings().VignetteAmount, 0.f, 20.f);
+		//ImGui::Checkbox("Vignette", &m_Renderer.GetSettings().Vignette);
+		//ImGui::SliderFloat("Amount", &m_Renderer.GetSettings().VignetteAmount, 0.f, 20.f);
 		if (ImGui::Button("Reset"))
 		{
 			m_Renderer.Reset();

@@ -110,12 +110,13 @@ const Ray Camera::getPrimaryRay(const int x, const int y, const glm::vec2 offset
 
 	}
 	glm::vec3 dir = glm::normalize(glm::normalize(forwardDir * settings.focus_dist + u * horizontal - v * vertical) * settings.focus_dist - defocus);
-	return Ray(position + defocus, dir);;
+
+	return getRay(position+defocus, dir);
 }
 void Camera::RecalculateView()
 {
-	float w = settings.sensor_width*0.001 / (2 * settings.focal_length * 0.001);
-	aperture = 0.5f * settings.focal_length * 0.001 / settings.f_stop;
+	float w = settings.sensor_width*0.001f / (2 * settings.focal_length * 0.001f);
+	aperture = 0.5f * settings.focal_length * 0.001f / settings.f_stop;
 	float width = 2 * w;
 	float height = aspect * width;
 

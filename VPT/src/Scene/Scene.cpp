@@ -4,32 +4,47 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include "AABB.hpp"
+#include <immintrin.h>
 Scene::Scene()
 {
-	textures.push_back(new Texture("assets/skydome.hdr"));
+	textures.push_back(new Texture("assets/rain.hdr"));
 	skyboxIndex = 0;
-	textures.push_back(new Texture("assets/earth.jpg"));
-	textures.push_back(new Texture("assets/image.jpg"));
-	AddMaterial({ 0.803922f, 0.803922f, 0.803922f }, 0.04f, 1, 0.f, false, false, 1.5f);
+	textures.push_back(new Texture("assets/plant.jpg"));
+	textures.push_back(new Texture("assets/rockAlbedo.jpg"));
+	AddMaterial({ 0.803922f, 0.803922f, 0.803922f }, 0.04f, 1, 0.f, true, false, 1.5f);
 	//materials.back().textureIndex = 1;
-	AddMaterial({ 0.803922f, 0.803922f, 0.803922f }, 0.04f, 1, 0.f, false, true, 1.5f);
+	AddMaterial({ 0.156863f, 0.803922f, 0.172549f }, 0.04f, 1, 0.f, false, false, 1.5f);
 	AddMaterial({ 0.803922f, 0.152941f, 0.152941f }, 0.04f, 1, 0.f, false, false, 1.5f);
 	AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, false, false, 1.5f);
 	materials.back().textureIndex = 1;
-	AddMaterial({ 1.f, 0.8f, 0.8f }, 0.2f, 500, 0.f, false, true, 1.33f);
+	AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, false, false, 1.33f);
 	materials.back().textureIndex = 2;
 	AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, false, false, 1.46f);
-	AddMaterial({ 0.803922f, 0.803922f, 0.803922f }, 0.04f, 1, 0.f, true, false, 1.5f);
-	addSphere(glm::vec3(0.f, -21.f, 0.f), 20.f, 0);
-	addSphere(glm::vec3(0.f, 0.0f, -7.f), 3.f, 3);
+	AddMaterial({ 0.803922f, 0.803922f, 0.803922f }, 0.04f, 1, 0.f, false, true, 1.5f);
+	//addSphere(glm::vec3(0.f, -200.f, 0.f), 200.f, 6);
+	//addSphere(glm::vec3(0.f, -3.f , 0.f), 1.f, 4);
 	//addSphere(glm::vec3(-1.f, 0.0f, 0.f), 0.5f, 1);
 	//
-	//glm::mat4 transform = glm::rotate(glm::mat4(1.f), glm::pi<float>() / 3, { 0.f, 1.f, 0.f });
-	glm::mat4 transform = glm::translate(glm::mat4(1.f), glm::vec3(-1.f, 0.f, 0.f));
-	//transform = glm::scale(transform, glm::vec3(0.5f));
-	addModel("assets/pyramid.obj", transform, 1);
-	//addModel("assets/cube.obj", glm::mat4(1.f), 4);
-	//addPlane({ 0.f, 1.f, 1.f }, 2.f, 0);
+	glm::mat4 transform = glm::rotate(glm::mat4(1.f), -glm::pi<float>() / 2, { 0.f, 1.f, 0.f });
+	//glm::mat4 transform = glm::translate(glm::mat4(1.f), glm::vec3(0.5f, 0.f, -3.f));
+	//transform = glm::rotate(transform, -glm::pi<float>() / 2, { 0.f, 1.f, 0.f });
+	//addModel("assets/rock.obj", transform, 4);
+	transform = glm::translate(glm::mat4(2.f), glm::vec3(0.f, 0.f, 0.f));
+	//addModel("assets/rock.obj", transform, 4);
+	transform = glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -3.6f, 0.f));
+	transform = glm::scale(transform, glm::vec3(0.2f));
+	addModel("assets/bunny2.obj", transform, 3);
+	//addPlane({ 0.f, 0.f, 1.f }, 3.f, 0);
+	//addPlane({ 0.f, 0.f, -1.f }, 8.f, 0);
+	//addPlane({ 0.f, 1.f, 0.f }, -0.1f, 0);
+	//addPlane({ 0.f, -1.f, 0.f }, 3.f, 3);
+	//addPlane({ 1.f, 0.f, 0.f }, 3.f, 1);
+	//addPlane({ -1.f, 0.f, 0.f }, 3.f, 2);
+	//addModel("assets/Cornell/Left.obj", glm::mat4(1.f), 1);
+	//addModel("assets/Cornell/Right.obj", glm::mat4(1.f), 2);
+	//addModel("assets/Cornell/Top.obj", glm::mat4(1.f), 0);
+	addModel("assets/Cornell/Bottom.obj", glm::mat4(1.f), 0);
+	//addModel("assets/Cornell/Back.obj", glm::mat4(1.f), 0);
 	for (size_t i = 0; i < shapes.size(); i++)
 	{
 		triIdx.push_back(i);
@@ -196,7 +211,7 @@ float Scene::FindBestSplitPlane(BVHNode& node, int& axis, float& splitPos)
 				cent = shape.sphere.position;
 				break;
 			case ShapeType::Plane:
-				cent = shape.plane.normal * shapes[triIdx[i]].plane.distance;
+				cent = -shape.plane.normal * shapes[triIdx[i]].plane.distance;
 				break;
 			}
 			boundsMin = std::min(boundsMin, cent[a]);
@@ -226,7 +241,7 @@ float Scene::FindBestSplitPlane(BVHNode& node, int& axis, float& splitPos)
 				bin[binIdx].bounds.grow(shape.sphere.getBounds());
 				break;
 			case ShapeType::Plane:
-				cent = shape.plane.normal * shapes[triIdx[i]].plane.distance;
+				cent = -shape.plane.normal * shapes[triIdx[i]].plane.distance;
 				binIdx = std::min(BINS - 1, (int)((cent[a] - boundsMin) * scale));
 				bin[binIdx].triCount++;
 				bin[binIdx].bounds.grow(shape.plane.getBounds());
@@ -271,7 +286,7 @@ void Scene::Subdivide(unsigned int nodeIdx)
 {
 	// terminate recursion
 	BVHNode& node = bvhNode[nodeIdx];
-	// determine split axis using SAH
+	// determine split axis using SAHw
 	int axis;
 	float splitPos;
 	float splitCost = FindBestSplitPlane(node, axis, splitPos);
@@ -293,7 +308,7 @@ void Scene::Subdivide(unsigned int nodeIdx)
 			cent = shape.sphere.position;
 			break;
 		case ShapeType::Plane:
-			cent = shape.plane.normal * shapes[triIdx[i]].plane.distance;
+			cent = -shape.plane.normal * shapes[triIdx[i]].plane.distance;
 			break;
 		}
 		if (cent[axis] < splitPos)
@@ -329,6 +344,16 @@ inline float IntersectAABB(const Ray& ray, const glm::vec3 bmin, const glm::vec3
 	tmin = glm::max(tmin, glm::min(tz1, tz2)), tmax = glm::min(tmax, glm::max(tz1, tz2));
 	if (tmax >= tmin && tmin < t_hit && tmax > 0) return tmin; else return std::numeric_limits<float>::infinity();
 }
+float IntersectAABB_SSE(const Ray& ray, const __m128& bmin4, const __m128& bmax4, float t_hit)
+{
+	static __m128 mask4 = _mm_cmpeq_ps(_mm_setzero_ps(), _mm_set_ps(1, 0, 0, 0));
+	__m128 t1 = _mm_mul_ps(_mm_sub_ps(_mm_and_ps(bmin4, mask4), ray.O4), ray.rD4);
+	__m128 t2 = _mm_mul_ps(_mm_sub_ps(_mm_and_ps(bmax4, mask4), ray.O4), ray.rD4);
+	__m128 vmax4 = _mm_max_ps(t1, t2), vmin4 = _mm_min_ps(t1, t2);
+	float tmax = std::min(vmax4.m128_f32[0], std::min(vmax4.m128_f32[1], vmax4.m128_f32[2]));
+	float tmin = std::max(vmin4.m128_f32[0], std::max(vmin4.m128_f32[1], vmin4.m128_f32[2]));
+	if (tmax >= tmin && tmin < t_hit && tmax > 0) return tmin; else return std::numeric_limits<float>::infinity();
+}
 bool Scene::IntersectBVH(Ray& ray, Intersection& isect) const
 {
 	BVHNode* node = &bvhNode[rootNodeIdx], * stack[64];
@@ -351,14 +376,14 @@ bool Scene::IntersectBVH(Ray& ray, Intersection& isect) const
 					}
 					break;
 				case ShapeType::Sphere:
-					if (shape.sphere.Intersect(ray, isect))
+					if (shape.sphere.Intersect(ray, isect.t_hit))
 					{
 						hit = true;
 						isect.objIdx = triIdx[node->leftFirst + i];
 					}
 					break;
 				case ShapeType::Plane:
-					if (shape.plane.Intersect(ray, isect))
+					if (shape.plane.Intersect(ray, isect.t_hit))
 					{
 						hit = true;
 						isect.objIdx = triIdx[node->leftFirst + i];
@@ -366,12 +391,9 @@ bool Scene::IntersectBVH(Ray& ray, Intersection& isect) const
 					break;
 				}
 				continue;
-				//IntersectTri(ray, tri[triIdx[node->leftFirst + i]]);
 			}
-			//return hit;
 			if (stackPtr == 0)
 			{
-				//return false;
 				break;
 			}
 			else node = stack[--stackPtr];
@@ -379,16 +401,16 @@ bool Scene::IntersectBVH(Ray& ray, Intersection& isect) const
 		}
 		BVHNode* child1 = &bvhNode[node->leftFirst];
 		BVHNode* child2 = &bvhNode[node->leftFirst + 1];
-
-		float dist1 = IntersectAABB(ray, child1->aabbMin, child1->aabbMax, isect.t_hit);
-		float dist2 = IntersectAABB(ray, child2->aabbMin, child2->aabbMax, isect.t_hit);
+		float dist1 = IntersectAABB_SSE(ray, child1->aabbMin4, child1->aabbMax4, isect.t_hit);
+		float dist2 = IntersectAABB_SSE(ray, child2->aabbMin4, child2->aabbMax4, isect.t_hit);
+		//float dist1 = IntersectAABB(ray, child1->aabbMin, child1->aabbMax, isect.t_hit);
+		//float dist2 = IntersectAABB(ray, child2->aabbMin, child2->aabbMax, isect.t_hit);
 
 		if (dist1 > dist2) { std::swap(dist1, dist2); std::swap(child1, child2); }
 		if (dist1 == std::numeric_limits<float>::infinity())
 		{
 			if (stackPtr == 0)
 			{
-				//return false;
 				break; 
 			}
 			else node = stack[--stackPtr];
@@ -400,4 +422,71 @@ bool Scene::IntersectBVH(Ray& ray, Intersection& isect) const
 		}
 	}
 	return hit;
+}
+
+bool Scene::OcclusionBVH(Ray& ray, float distance) const
+{
+	BVHNode* node = &bvhNode[rootNodeIdx], * stack[64];
+	unsigned int stackPtr = 0;
+	float dis = distance;
+	while (1)
+	{
+		if (node->isLeaf())
+		{
+			for (unsigned int i = 0; i < node->triCount; i++)
+			{
+				const Shape& shape = shapes[triIdx[node->leftFirst + i]];
+				switch (shape.type)
+				{
+				case ShapeType::Triangle:
+					if (shape.triangle.Intersect(ray, dis))
+					{
+						if (dis * dis < distance) return true;
+					}
+					break;
+				case ShapeType::Sphere:
+					if (shape.sphere.Intersect(ray, dis))
+					{
+						if (dis * dis < distance) return true;
+					}
+					break;
+				case ShapeType::Plane:
+					if (shape.plane.Intersect(ray, dis))
+					{
+						if (dis * dis < distance) return true;
+					}
+					break;
+				}
+				continue;
+			}
+			if (stackPtr == 0)
+			{
+				break;
+			}
+			else node = stack[--stackPtr];
+			continue;
+		}
+		BVHNode* child1 = &bvhNode[node->leftFirst];
+		BVHNode* child2 = &bvhNode[node->leftFirst + 1];
+		float dist1 = IntersectAABB_SSE(ray, child1->aabbMin4, child1->aabbMax4, dis);
+		float dist2 = IntersectAABB_SSE(ray, child2->aabbMin4, child2->aabbMax4, dis);
+		//float dist1 = IntersectAABB(ray, child1->aabbMin, child1->aabbMax, dis);
+		//float dist2 = IntersectAABB(ray, child2->aabbMin, child2->aabbMax, dis);
+
+		if (dist1 > dist2) { std::swap(dist1, dist2); std::swap(child1, child2); }
+		if (dist1 == std::numeric_limits<float>::infinity())
+		{
+			if (stackPtr == 0)
+			{
+				break;
+			}
+			else node = stack[--stackPtr];
+		}
+		else
+		{
+			node = child1;
+			if (dist2 != std::numeric_limits<float>::infinity()) stack[stackPtr++] = child2;
+		}
+	}
+	return false;
 }

@@ -89,10 +89,7 @@ glm::vec3 PathTracer::TraceRay(Ray& ray, int depth)
 				dir.x *= -1;
 				dir.y *= -1;
 				dir = surf.ToWorld(dir);
-				Ray bounce(glm::normalize(dir));
-				bounce.origin = ray(isect.t_hit) + interaction.hit_normal * 0.0001f;
-				//bounce.direction = glm::normalize(dir);
-				ray = bounce;
+				ray = getRay(rayPnt(ray, isect.t_hit) + interaction.hit_normal * 0.0001f, dir);
 				throughput *= hitColor;
 				continue;
 			}
@@ -105,34 +102,28 @@ glm::vec3 PathTracer::TraceRay(Ray& ray, int depth)
 					dir.x *= -1;
 					dir.y *= -1;
 					dir = surf.ToWorld(dir);
-					Ray bounce(glm::normalize(dir));
 					if (glm::dot(interaction.hit_normal, dir) < 0)
 					{
-						bounce.origin = ray(isect.t_hit) - interaction.hit_normal * 0.0001f;
+						ray = getRay(rayPnt(ray, isect.t_hit) - interaction.hit_normal * 0.0001f, glm::normalize(dir));
 					}
 					else
 					{
-						bounce.origin = ray(isect.t_hit) + interaction.hit_normal * 0.0001f;
+						ray = getRay(rayPnt(ray, isect.t_hit) + interaction.hit_normal * 0.0001f, glm::normalize(dir));
 					}
-					//bounce.direction = glm::normalize(dir);
-					ray = bounce;
 					throughput *= hitColor;
 					continue;
 				}
 				else
 				{
 					glm::vec3 dir = refract(ray.direction, interaction.hit_normal, mat.ior);
-					Ray bounce(glm::normalize(dir));
 					if (glm::dot(interaction.hit_normal, dir) < 0)
 					{
-						bounce.origin = ray(isect.t_hit) - interaction.hit_normal * 0.0001f;
+						ray = getRay(rayPnt(ray, isect.t_hit) - interaction.hit_normal * 0.0001f, glm::normalize(dir));
 					}
 					else
 					{
-						bounce.origin = ray(isect.t_hit) + interaction.hit_normal * 0.0001f;
+						ray = getRay(rayPnt(ray, isect.t_hit) + interaction.hit_normal * 0.0001f, glm::normalize(dir));
 					}
-					//bounce.direction = glm::normalize(dir);
-					ray = bounce;
 					throughput *= hitColor;
 					continue;
 				}
@@ -142,11 +133,8 @@ glm::vec3 PathTracer::TraceRay(Ray& ray, int depth)
 				float pdf;
 				glm::vec3 dir = sampleCosineHemisphere(pdf);
 				dir = surf.ToWorld(dir);
-				Ray bounce(glm::normalize(dir));
-				bounce.origin = ray(isect.t_hit) + interaction.hit_normal * 0.0001f;
-				//bounce.direction = glm::normalize(dir);
 				glm::vec3 diffuse = glm::one_over_pi<float>() * hitColor * glm::dot(interaction.hit_normal, dir) / (pdf * rrProb);
-				ray = bounce;
+				ray = getRay(rayPnt(ray, isect.t_hit) + interaction.hit_normal * 0.0001f, glm::normalize(dir));
 				throughput *= diffuse;
 				continue;
 			}

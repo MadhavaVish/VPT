@@ -10,7 +10,7 @@ public:
 
 	Plane(const glm::vec3 n, const float d, const uint32_t materialIdx);
 
-	bool Intersect(Ray& ray, Intersection& isect) const;
+	bool Intersect(Ray& ray, float& t_hit) const;
 	SurfaceInteraction getSurfaceProperties(const Ray& ray, const Intersection& isect) const;
 	AABB getBounds();
 	glm::vec3 normal;

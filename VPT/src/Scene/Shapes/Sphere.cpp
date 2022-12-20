@@ -14,7 +14,7 @@ glm::vec2 Sphere::getUVCoords(const glm::vec3& point) const
 	return glm::vec2(u, v);
 
 }
-bool Sphere::Intersect(Ray& ray, Intersection& isect) const
+bool Sphere::Intersect(Ray& ray, float& t_hit) const
 {
 	glm::vec3 oc = ray.origin - position;
 	float b = glm::dot(oc, ray.direction);
@@ -23,14 +23,14 @@ bool Sphere::Intersect(Ray& ray, Intersection& isect) const
 	
 	if (d <= 0) return false;
 	d = sqrt(d), t = -b - d;
-	if (t < isect.t_hit && t > 0)
+	if (t < t_hit && t > 0)
 	{
-		isect.t_hit = t;
+		t_hit = t;
 		return true;
 	};
 	t = d - b;
-	if (t < isect.t_hit && t > 0) {
-		isect.t_hit = t;
+	if (t < t_hit && t > 0) {
+		t_hit = t;
 		return true;
 	};
 	return false;
@@ -40,7 +40,7 @@ SurfaceInteraction Sphere::getSurfaceProperties(const Ray& ray, const Intersecti
 {
 	SurfaceInteraction interaction;
 	interaction.materialIdx = material;
-	interaction.hit_normal = (ray(isect.t_hit) - position) * invr;
+	interaction.hit_normal = (rayPnt(ray, isect.t_hit) - position) * invr;
 	interaction.uv = getUVCoords(interaction.hit_normal);
 	return interaction;
 }

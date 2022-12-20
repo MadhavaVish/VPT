@@ -8,7 +8,7 @@ class Sphere{
 public:
 	Sphere(const glm::vec3 pos,const float radius, const uint32_t materialIdx);
 
-	bool Intersect(Ray& ray, Intersection &isect) const;
+	bool Intersect(Ray& ray, float& t_hit) const;
 	SurfaceInteraction getSurfaceProperties(const Ray& ray, const Intersection& isect) const;
 	AABB getBounds();
 public:

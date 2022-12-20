@@ -49,6 +49,7 @@ public:
 	void addModel(const std::string& filepath, Transform transform, uint32_t material);
 	void addSphere(glm::vec3 pos, float r, uint32_t material);
 	void addPlane(glm::vec3 normal, float dist, uint32_t material);
+	bool OcclusionBVH(Ray& ray, float distance) const;
 private:
 	void BuildBVH();
 	void Subdivide(unsigned int nodeIdx);

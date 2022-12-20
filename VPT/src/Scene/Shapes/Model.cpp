@@ -1,6 +1,8 @@
 #include "Model.hpp"
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
+//#define TINYOBJ_LOADER_OPT_IMPLEMENTATION
+//#include "tinyobj_loader_opt.h"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 #include <unordered_map>
@@ -67,6 +69,7 @@ Model::Model(const std::string& filepath, Transform transform, const uint32_t ma
             indices.push_back(uniqueVertices[vertex]);
 		}
 	}
+    //std::cout << vertices.size() << std::endl;
 }
 
 std::vector<Triangle> Model::GetTriangles() const
@@ -109,7 +112,35 @@ bool Triangle::Intersect(Ray& ray, Intersection& isect) const
     }
     return false;
 }
+bool Triangle::Intersect(Ray& ray, float& t_hit) const
+{
+    if (model->vertices.size() == 0) return false;
+    glm::vec3 v0 = model->vertices[v_indices[0]], v1 = model->vertices[v_indices[1]], v2 = model->vertices[v_indices[2]];
+    glm::vec3 A = v1 - v0;
+    glm::vec3 B = v2 - v0;
+    glm::vec3 pvec = cross(ray.direction, B);
+    float determinant = glm::dot(A, pvec);
 
+    float invDeterminant = 1 / determinant;
+
+    glm::vec3 tvec = ray.origin - v0;
+    float u = glm::dot(tvec, pvec) * invDeterminant;
+    if (u < 0 || u  > 1) return false;
+
+    glm::vec3 qvec = cross(tvec, A);
+    float v = glm::dot(ray.direction, qvec) * invDeterminant;
+    if (v < 0 || u + v > 1) return false;
+
+    float t = glm::dot(B, qvec) * invDeterminant;
+    if (t < t_hit && t > 0)
+    {
+        t_hit = t;
+        //isect.barycentric = glm::vec2(u, v);
+        return true;
+
+    }
+    return false;
+}
 SurfaceInteraction Triangle::getSurfaceProperties(const Ray& ray, const Intersection& isect) const
 {
     SurfaceInteraction interaction;

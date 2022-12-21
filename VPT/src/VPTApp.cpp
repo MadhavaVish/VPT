@@ -9,6 +9,7 @@
 //#include "Integrators/WhittedRenderer.hpp"
 #include "Integrators/PathTracer.hpp"
 #include "Integrators/WhittedRenderer.hpp"
+#include "Integrators/Visualizer.hpp"
 #include "Utils/Camera.hpp"
 #include "Utils/Camera.hpp"
 #include <memory>
@@ -92,8 +93,9 @@ public:
 private:
 	Scene m_Scene;
 	Camera cam;
-	//Whitted m_Renderer;
-	PathTracer m_Renderer;
+	//Visualizer m_Renderer;
+	Whitted m_Renderer;
+	//PathTracer m_Renderer;
 	uint32_t  m_ViewportHeight = 0, m_ViewportWidth = 0;
 	float m_lastRenderTime = 0.f;
 };

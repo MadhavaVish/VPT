@@ -11,9 +11,9 @@ void PathTracer::Render(const Scene& scene, const Camera& camera)
 		memset(accumulator, 0, m_FinalImage->GetWidth() * m_FinalImage->GetHeight() * sizeof(glm::vec3));
 
 	float gamma = 1/2.2f;
-	float invWidth = 1.f / (float)m_FinalImage->GetWidth();
-	float invHeight = 1.f / (float)m_FinalImage->GetHeight();
-	float lensRadius = 0.008f;
+	//float invWidth = 1.f / (float)m_FinalImage->GetWidth();
+	//float invHeight = 1.f / (float)m_FinalImage->GetHeight();
+
 	#pragma omp parallel for schedule(dynamic)
 	for (int y = 0; y < m_FinalImage->GetHeight(); y++)
 	{
@@ -30,13 +30,12 @@ void PathTracer::Render(const Scene& scene, const Camera& camera)
 			glm::vec4 accumulated(glm::pow(accumulator[x + y * m_FinalImage->GetWidth()] / (float)frameIndex, glm::vec3(gamma)), 1.f);
 			accumulated = glm::clamp(accumulated, glm::vec4(0.f), glm::vec4(1.f));
 
-			if (settings.Vignette)
-			{
-				float exp = 1 / settings.VignetteAmount;
-				float _x = x * invWidth, _y = y * invHeight;
-				accumulated *= (1 + glm::pow(8 * _x * _y * (1 - _x) * (1 - _y), exp)) / 2.f;
-
-			}
+			//if (settings.Vignette)
+			//{
+			//	float exp = 1 / settings.VignetteAmount;
+			//	float _x = x * invWidth, _y = y * invHeight;
+			//	accumulated *= (1 + glm::pow(8 * _x * _y * (1 - _x) * (1 - _y), exp)) / 2.f;
+			//}
 			m_ImageData[x + y * m_FinalImage->GetWidth()] = Utils::ConvertToRGBA(accumulated);
 		}
 	}

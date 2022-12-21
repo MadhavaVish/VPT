@@ -6,23 +6,35 @@
 void Whitted::Render(const Scene &scene, const Camera& camera)
 {
 	m_ActiveScene = &scene;
-	float gamma = 1/2.2f;
-	const float invWidth = 1.f / m_FinalImage->GetWidth();
-	const float invHeight = 1.f / m_FinalImage->GetWidth();
+	if (frameIndex == 1)
+		memset(accumulator, 0, m_FinalImage->GetWidth() * m_FinalImage->GetHeight() * sizeof(glm::vec3));
+
+	float gamma = 1 / 2.2f;
 	#pragma omp parallel for schedule(dynamic)
 	for (int y = 0; y < m_FinalImage->GetHeight(); y++)
 	{
-		m_ActiveCamera = &camera;
 		for (uint32_t x = 0; x < m_FinalImage->GetWidth(); x++)
 		{
+			m_ActiveCamera = &camera;
 			Ray ray;
-			glm::vec2 randomOffset(Walnut::Random::Float() * invWidth, Walnut::Random::Float() * invHeight);
+			glm::vec2 randomOffset(Walnut::Random::Float(), Walnut::Random::Float());
+			//glm::vec2 randomOffset(0.f);
 			ray = m_ActiveCamera->getPrimaryRay(x, y, randomOffset);
-			glm::vec4 color(glm::pow(TraceRay(ray, 0), glm::vec3(gamma)), 1.f);
-			m_ImageData[x +y*m_FinalImage->GetWidth()] = Utils::ConvertToRGBA(color);
+
+			glm::vec3 color(TraceRay(ray, 0));
+			accumulator[x + y * m_FinalImage->GetWidth()] += color;
+
+			glm::vec4 accumulated(glm::pow(accumulator[x + y * m_FinalImage->GetWidth()] / (float)frameIndex, glm::vec3(gamma)), 1.f);
+			accumulated = glm::clamp(accumulated, glm::vec4(0.f), glm::vec4(1.f));
+
+			m_ImageData[x + y * m_FinalImage->GetWidth()] = Utils::ConvertToRGBA(accumulated);
 		}
 	}
 	m_FinalImage->SetData(m_ImageData);
+	if (settings.Accumulate)
+		frameIndex++;
+	else
+		Reset();
 }
 
 static int maxBounces = 10;
@@ -133,6 +145,6 @@ void Whitted::OnResize(uint32_t width, uint32_t height)
 	}
 	delete[] m_ImageData;
 	m_ImageData = new uint32_t[width * height];
-
-
+	delete[] accumulator;
+	accumulator = new glm::vec3[width * height];
 }

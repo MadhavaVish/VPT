@@ -9,21 +9,21 @@ Scene::Scene()
 {
 	textures.push_back(new Texture("assets/skydome.hdr"));
 	skyboxIndex = 0;
-/*	textures.push_back(new Texture("assets/plant.jpg"));
-	textures.push_back(new Texture("assets/rockAlbedo.jpg"))*/;
+	//textures.push_back(new Texture("assets/plant.jpg"));
+	//textures.push_back(new Texture("assets/rockAlbedo.jpg"));
 	AddMaterial({ 0.803922f, 0.803922f, 0.803922f }, 0.04f, 1, 0.f, false, false, 1.5f);
 	//materials.back().textureIndex = 1;
 	AddMaterial({ 0.156863f, 0.803922f, 0.172549f }, 0.04f, 1, 0.f, false, true, 1.5f);
 	AddMaterial({ 0.803922f, 0.152941f, 0.152941f }, 0.04f, 1, 0.f, false, false, 1.5f);
-	AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, false, false, 1.5f);
+	AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, true, false, 1.5f);
 	//materials.back().textureIndex = 1;
-	AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, false, false, 1.33f);
+	AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, false, true, 1.33f);
 	//materials.back().textureIndex = 2;
 	AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, false, false, 1.46f);
 	AddMaterial({ 0.803922f, 0.803922f, 0.803922f }, 0.04f, 1, 0.f, false, true, 1.5f);
 	//addSphere(glm::vec3(0.f, -200.f, 0.f), 200.f, 6);
-	//addSphere(glm::vec3(0.f, -3.f , 0.f), 1.f, 4);
-	//addSphere(glm::vec3(-1.f, 0.0f, 0.f), 0.5f, 1);
+	addSphere(glm::vec3(1.f, 0.f , 0.f), 1.f, 4);
+	addSphere(glm::vec3(-1.f, 0.0f, 0.f), 1.f, 3);
 	//
 	glm::mat4 transform = glm::rotate(glm::mat4(1.f), -glm::pi<float>() / 2, { 0.f, 1.f, 0.f });
 	//glm::mat4 transform = glm::translate(glm::mat4(1.f), glm::vec3(0.5f, 0.f, -3.f));
@@ -31,9 +31,9 @@ Scene::Scene()
 	//addModel("assets/rock.obj", transform, 4);
 	transform = glm::translate(glm::mat4(2.f), glm::vec3(0.f, 0.f, 0.f));
 	//addModel("assets/rock.obj", transform, 4);
-	transform = glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -0.f, 0.f));
-	transform = glm::scale(transform, glm::vec3(1.f));
-	addModel("assets/bunny2.obj", transform, 1);
+	transform = glm::translate(glm::mat4(1.f), glm::vec3(5.0f, 0.f, 2.4f));
+	transform = glm::scale(transform, glm::vec3(0.2f));
+	//addModel("assets/plant.obj", transform, 3);
 	//addPlane({ 0.f, 0.f, 1.f }, 3.f, 0);
 	//addPlane({ 0.f, 0.f, -1.f }, 8.f, 0);
 	//addPlane({ 0.f, 1.f, 0.f }, -0.1f, 0);
@@ -43,7 +43,7 @@ Scene::Scene()
 	//addModel("assets/Cornell/Left.obj", glm::mat4(1.f), 1);
 	//addModel("assets/Cornell/Right.obj", glm::mat4(1.f), 2);
 	//addModel("assets/Cornell/Top.obj", glm::mat4(1.f), 0);
-	transform = glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 3.6f, 0.f));
+	transform = glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 2.6f, 0.f));
 	addModel("assets/Cornell/Bottom.obj", transform, 0);
 	//addModel("assets/Cornell/Back.obj", glm::mat4(1.f), 0);
 	for (unsigned int i = 0; i < shapes.size(); i++)
@@ -65,7 +65,7 @@ Scene::~Scene()
 }
 bool Scene::Intersect(Ray& ray, Intersection& isect) const
 {
-	bool hit = false;
+	//bool hit = false;
 	//for (uint32_t i = 0; i < shapes.size(); i++)
 	//{
 	//	switch (shapes[i].type)
@@ -93,8 +93,8 @@ bool Scene::Intersect(Ray& ray, Intersection& isect) const
 	//		break;
 	//	}
 	//}
-	hit = IntersectBVH(ray, isect);
-	return hit;
+	//return hit;
+	return IntersectBVH(ray, isect);
 }
 SurfaceInteraction Scene::getSurfaceProperties(const Ray& ray, const Intersection& isect) const
 {
@@ -337,7 +337,7 @@ void Scene::Subdivide(unsigned int nodeIdx)
 	Subdivide(leftChildIdx);
 	Subdivide(rightChildIdx);
 }
-inline float IntersectAABB(const Ray& ray, const glm::vec3 bmin, const glm::vec3 bmax, float t_hit)
+inline float IntersectAABB(const Ray& ray, const glm::vec3& bmin, const glm::vec3& bmax, const float& t_hit)
 {
 	float tx1 = (bmin.x - ray.origin.x) * ray.invDir.x, tx2 = (bmax.x - ray.origin.x) * ray.invDir.x;
 	float tmin = glm::min(tx1, tx2), tmax = glm::max(tx1, tx2);
@@ -347,7 +347,7 @@ inline float IntersectAABB(const Ray& ray, const glm::vec3 bmin, const glm::vec3
 	tmin = glm::max(tmin, glm::min(tz1, tz2)), tmax = glm::min(tmax, glm::max(tz1, tz2));
 	if (tmax >= tmin && tmin < t_hit && tmax > 0) return tmin; else return std::numeric_limits<float>::infinity();
 }
-float IntersectAABB_SSE(const Ray& ray, const __m128& bmin4, const __m128& bmax4, float t_hit)
+inline float IntersectAABB_SSE(const Ray& ray, const __m128& bmin4, const __m128& bmax4, const float& t_hit)
 {
 	static __m128 mask4 = _mm_cmpeq_ps(_mm_setzero_ps(), _mm_set_ps(1, 0, 0, 0));
 	__m128 t1 = _mm_mul_ps(_mm_sub_ps(_mm_and_ps(bmin4, mask4), ray.O4), ray.rD4);

@@ -97,17 +97,17 @@ bool Scene::Intersect(Ray& ray, Intersection& isect) const
 	//	}
 	//}
 	//return hit;
-	float initial = isect.t_hit;
-	IntersectQBVH(ray, isect, qrootNodeIdx);
-	if (isect.t_hit < initial)
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-	//return IntersectBVH(ray, isect);
+	//float initial = isect.t_hit;
+	//IntersectQBVH(ray, isect, qrootNodeIdx);
+	//if (isect.t_hit < initial)
+	//{
+	//	return true;
+	//}
+	//else
+	//{
+	//	return false;
+	//}
+	return IntersectBVH(ray, isect);
 }
 SurfaceInteraction Scene::getSurfaceProperties(const Ray& ray, const Intersection& isect) const
 {
@@ -166,7 +166,7 @@ glm::vec3 Scene::getSkyColor(const Ray& ray) const
 	
 	return textures[skyboxIndex]->sampleImageTexture(u, v);
 }
-
+static int BVHDepth = 0;
 void Scene::BuildBVH()
 {
 	unsigned int N = static_cast<unsigned int>(shapes.size());
@@ -180,18 +180,21 @@ void Scene::BuildBVH()
 	UpdateNodeBounds(rootNodeIdx);
 	// subdivide recursively
 	auto t1 = Clock::now();
-	Subdivide(rootNodeIdx);
+	Subdivide(rootNodeIdx,0);
 	auto t2 = Clock::now();
 	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
 	printf("BVH (%i nodes) constructed in %.8fms.\n", nodesUsed, time_span.count() * 1000);
+	std::cout << "BVH Depth: " << BVHDepth << std::endl;
 }
-void Scene::Flatten(unsigned int QNodeIdx, unsigned int BNodeIdx, bool isRoot)
+static int QBVHDepth = 0;
+void Scene::Flatten(unsigned int QNodeIdx, unsigned int BNodeIdx, bool isRoot, int depth)
 {
 	//BVHNode& node = bvhNode[BNodeIdx];
 	if ((BNodeIdx == rootNodeIdx )&& !isRoot)
 	{
 		return;
 	}
+	if (depth > QBVHDepth) QBVHDepth = depth;
 	QBVHNode& qNode = qbvhNodes[QNodeIdx];
 	for (int i = 0; i < 4; i++)
 	{
@@ -253,7 +256,7 @@ void Scene::Flatten(unsigned int QNodeIdx, unsigned int BNodeIdx, bool isRoot)
 		{
 			qNode.child[numChildren] = qnodesUsed++;
 			qNode.count[numChildren] = 0;
-			Flatten(qNode.child[numChildren], adopted, false);
+			Flatten(qNode.child[numChildren], adopted, false, depth + 1);
 		}
 		numChildren++;
 	}
@@ -276,10 +279,11 @@ void Scene::BuildQBVH()
 	//QBVHNode& root = qbvhNodes[qrootNodeIdx];
 	//BVHNode& b_root = bvhNode[rootNodeIdx];
 	auto t1 = Clock::now();
-	Flatten(qrootNodeIdx, rootNodeIdx, true);
+	Flatten(qrootNodeIdx, rootNodeIdx, true, 0);
 	auto t2 = Clock::now();
 	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
 	printf("QBVH (%i nodes) constructed in %.8fms.\n", qnodesUsed, time_span.count() * 1000);
+	std::cout << "QBVH Depth: " << QBVHDepth << std::endl;
 }
 void Scene::UpdateNodeBounds(unsigned int nodeIdx)
 {
@@ -397,7 +401,8 @@ float Scene::CalculateNodeCost(BVHNode& node)
 	float surfaceArea = e.x * e.y + e.y * e.z + e.z * e.x;
 	return node.triCount * surfaceArea;
 }
-void Scene::Subdivide(unsigned int nodeIdx)
+
+void Scene::Subdivide(unsigned int nodeIdx, int depth)
 {
 	// terminate recursion
 	BVHNode& node = bvhNode[nodeIdx];
@@ -407,6 +412,7 @@ void Scene::Subdivide(unsigned int nodeIdx)
 	float splitCost = FindBestSplitPlane(node, axis, splitPos);
 	float nosplitCost = CalculateNodeCost(node);
 	if (splitCost >= nosplitCost) return;
+	if (depth > BVHDepth) BVHDepth = depth;
 	// in-place partition
 	int i = node.leftFirst;
 	int j = i + node.triCount - 1;
@@ -446,8 +452,8 @@ void Scene::Subdivide(unsigned int nodeIdx)
 	UpdateNodeBounds(leftChildIdx);
 	UpdateNodeBounds(rightChildIdx);
 	// recurse
-	Subdivide(leftChildIdx);
-	Subdivide(rightChildIdx);
+	Subdivide(leftChildIdx, depth+1);
+	Subdivide(rightChildIdx, depth + 1);
 }
 inline float IntersectAABB(const Ray& ray, const glm::vec3& bmin, const glm::vec3& bmax, const float& t_hit)
 {

@@ -47,15 +47,15 @@ glm::vec3 Visualizer::TraceRay(Ray& ray, int depth)
 		SurfaceInteraction interaction = m_ActiveScene->getSurfaceProperties(ray, isect);
 		Frame surf(interaction.hit_normal);
 
-		Material mat = m_ActiveScene->materials[interaction.materialIdx];
+		/*Material mat = m_ActiveScene->materials[interaction.materialIdx];
 		glm::vec3 hitColor = mat.albedo;
 		if (mat.textureIndex >= 0)
 		{
 			hitColor *= m_ActiveScene->textures[mat.textureIndex]->sampleImageTexture(interaction.uv.x, interaction.uv.y);
 		}
-		return hitColor;
-		/*glm::vec3 normalColor = interaction.hit_normal * 0.5f + 0.5f;
-		return normalColor;*/
+		return hitColor;*/
+		glm::vec3 normalColor = interaction.hit_normal * 0.5f + 0.5f;
+		return normalColor;
 		//float d = far / (far - near) + (1.f / isect.t_hit) * (-far * near) / (far - near);
 		/*glm::vec3 depth(isect.t_hit/10.f);
 		return depth;*/

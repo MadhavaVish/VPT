@@ -60,8 +60,8 @@ public:
 private:
 	void BuildBVH();
 	void BuildQBVH();
-	void Flatten(unsigned int QNodeIdx, unsigned int BNodeIdx, bool isRoot);
-	void Subdivide(unsigned int nodeIdx);
+	void Flatten(unsigned int QNodeIdx, unsigned int BNodeIdx, bool isRoot, int depth);
+	void Subdivide(unsigned int nodeIdx, int depth);
 	void UpdateNodeBounds(unsigned int nodeIdx);
 	float FindBestSplitPlane(BVHNode& node, int& axis, float& splitPos);
 	float CalculateNodeCost(BVHNode& node);

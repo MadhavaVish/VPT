@@ -292,13 +292,14 @@ void Scene::Flatten(unsigned int QNodeIdx, unsigned int BNodeIdx, bool isRoot)
 			numChildren++;
 			
 		}
-		//get children of adopted node
-		//adoptedBVHChildren[numChildren - 1] = adopted;
+		// have max number of children big nice
 		if (numChildren == 4)
 			break;
-		//childCandidateIndices.erase(childCandidateIndices.begin() + largest);
+		//delete last adopted child from candidates
 		std::swap((*childCandidateIndices)[largest], (*childCandidateIndices)[childCandidateIndices->size() - 1]);
 		childCandidateIndices->pop_back();
+
+		//get children of adopted node 
 		if (bvhNode[adopted].isLeaf())
 			continue;
 		else
@@ -310,6 +311,7 @@ void Scene::Flatten(unsigned int QNodeIdx, unsigned int BNodeIdx, bool isRoot)
 		}
 
 	}
+	// flatten children
 	for (int i = 0; i < 4; i++)
 	{
 		if (qNode.count[i] == 0)
@@ -317,10 +319,6 @@ void Scene::Flatten(unsigned int QNodeIdx, unsigned int BNodeIdx, bool isRoot)
 			Flatten(qNode.child[i], adoptedBVHChildren[i], false);
 		}
 	}
-	//Flatten(qNode.child[0], adoptedBVHChildren[0], false);
-	//Flatten(qNode.child[1], adoptedBVHChildren[1], false);
-	//Flatten(qNode.child[2], adoptedBVHChildren[2], false);
-	//Flatten(qNode.child[3], adoptedBVHChildren[3], false);
 	delete childCandidateIndices;
 	return;
 }
@@ -332,8 +330,11 @@ void Scene::BuildQBVH()
 	qbvhNodes = (QBVHNode*)_aligned_malloc(sizeof(QBVHNode) * N * 2, 64);
 	//QBVHNode& root = qbvhNodes[qrootNodeIdx];
 	//BVHNode& b_root = bvhNode[rootNodeIdx];
+	auto t1 = Clock::now();
 	Flatten(qrootNodeIdx, rootNodeIdx, true);
-	std::cout << qnodesUsed << " number of nodes in qbvh" << std::endl;
+	auto t2 = Clock::now();
+	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+	printf("QBVH (%i nodes) constructed in %.2fms.\n", qnodesUsed, time_span.count() * 1000);
 }
 void Scene::UpdateNodeBounds(unsigned int nodeIdx)
 {

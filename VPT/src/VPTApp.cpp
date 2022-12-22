@@ -11,7 +11,7 @@
 #include "Integrators/WhittedRenderer.hpp"
 #include "Integrators/Visualizer.hpp"
 #include "Utils/Camera.hpp"
-#include "Utils/Camera.hpp"
+#include "Utils/Intersection.hpp"
 #include <memory>
 using namespace Walnut;
 
@@ -25,6 +25,7 @@ public:
 		{
 			m_Renderer.Reset();
 		}
+
 	}
 	virtual void OnUIRender() override
 	{
@@ -75,6 +76,7 @@ public:
 		auto image = m_Renderer.GetFinalImage();
 		if(image)
 			ImGui::Image(image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() }, ImVec2(0,1), ImVec2(1, 0));
+
 		ImGui::PopStyleVar();
 		ImGui::End();
 
@@ -94,8 +96,8 @@ private:
 	Scene m_Scene;
 	Camera cam;
 	//Visualizer m_Renderer;
-	Whitted m_Renderer;
-	//PathTracer m_Renderer;
+	//Whitted m_Renderer;
+	PathTracer m_Renderer;
 	uint32_t  m_ViewportHeight = 0, m_ViewportWidth = 0;
 	float m_lastRenderTime = 0.f;
 };

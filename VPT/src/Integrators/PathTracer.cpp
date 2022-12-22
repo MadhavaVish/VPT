@@ -17,7 +17,7 @@ void PathTracer::Render(const Scene& scene, const Camera& camera)
 	#pragma omp parallel for schedule(dynamic)
 	for (int y = 0; y < m_FinalImage->GetHeight(); y++)
 	{
-		for (uint32_t x = 0; x < m_FinalImage->GetWidth(); x++)
+		for (int x = 0; x < m_FinalImage->GetWidth(); x++)
 		{
 			m_ActiveCamera = &camera;
 			Ray ray;
@@ -51,11 +51,6 @@ glm::vec3 PathTracer::TraceRay(Ray& ray, int depth)
 	glm::vec3 throughput(1.f);
 	for (size_t i = 0; i < maxBounces; i++)
 	{
-		if (depth == maxBounces)
-		{
-			return glm::vec3(0.f);
-		}
-		glm::vec3 color(0.f);
 		Intersection isect;
 		if (m_ActiveScene->Intersect(ray, isect))
 		{

@@ -10,7 +10,7 @@
 #include <vector>
 #include "Materials/Texture.hpp"
 class Scene {
-private:
+public:
 	enum class ShapeType
 	{
 		Triangle,
@@ -19,9 +19,9 @@ private:
 	};
 	struct Shape
 	{
-		Shape(ShapeType t, Triangle tri) : type(t), triangle(tri) {}
-		Shape(ShapeType t, Sphere sph) : type(t), sphere(sph) {}
-		Shape(ShapeType t, Plane pla) : type(t), plane(pla) {}
+		Shape(Triangle tri) : type(ShapeType::Triangle), triangle(tri) {}
+		Shape(Sphere sph) : type(ShapeType::Sphere), sphere(sph) {}
+		Shape(Plane pla) : type(ShapeType::Plane), plane(pla) {}
 		ShapeType type;
 		union
 		{
@@ -30,12 +30,19 @@ private:
 			Plane plane;
 		};
 	};
-
+private:
 	struct BVHNode
 	{
 		union { struct { glm::vec3 aabbMin; unsigned int leftFirst; }; __m128 aabbMin4; };
 		union { struct { glm::vec3 aabbMax; unsigned int triCount; }; __m128 aabbMax4; };
 		bool isLeaf() { return triCount > 0; }
+	};
+	struct QBVHNode
+	{
+		float bminx4[4]{ 0.f }, bmaxx4[4]{ 0.f };
+		float bminy4[4]{ 0.f }, bmaxy4[4]{ 0.f };
+		float bminz4[4]{ 0.f }, bmaxz4[4]{ 0.f };
+		int child[4], count[4];
 	};
 	struct Bin { AABB bounds; int triCount = 0; };
 public:
@@ -52,6 +59,8 @@ public:
 	bool OcclusionBVH(Ray& ray, float distance) const;
 private:
 	void BuildBVH();
+	void BuildQBVH();
+	void Flatten(unsigned int QNodeIdx, unsigned int BNodeIdx, bool isRoot);
 	void Subdivide(unsigned int nodeIdx);
 	void UpdateNodeBounds(unsigned int nodeIdx);
 	float FindBestSplitPlane(BVHNode& node, int& axis, float& splitPos);
@@ -66,5 +75,7 @@ private:
 	uint32_t skyboxIndex;
 	std::vector<unsigned int> triIdx;
 	BVHNode* bvhNode = 0;
+	QBVHNode* qbvhNodes = 0;
 	unsigned int rootNodeIdx = 0, nodesUsed = 2;
+	unsigned int qrootNodeIdx = 0, qnodesUsed = 1;
 };

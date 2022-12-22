@@ -11,43 +11,43 @@ Scene::Scene()
 {
 	textures.push_back(new Texture("assets/skydome.hdr"));
 	skyboxIndex = 0;
-	textures.push_back(new Texture("assets/plant.jpg"));
-	textures.push_back(new Texture("assets/rockAlbedo.jpg"));
-	AddMaterial({ 0.803922f, 0.803922f, 0.803922f }, 0.04f, 1, 0.f, false, false, 1.5f);
+	//textures.push_back(new Texture("assets/DeskScene/bread.jpg"));
+	//textures.push_back(new Texture("assets/DeskScene/desk.jpg"));
+	//textures.push_back(new Texture("assets/DeskScene/lampstand.jpg"));
+	//textures.push_back(new Texture("assets/DeskScene/plant.jpg"));
+	//textures.push_back(new Texture("assets/DeskScene/pot.jpg"));
+	//AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, false, false, 1.5f);
 	//materials.back().textureIndex = 1;
-	AddMaterial({ 0.156863f, 0.803922f, 0.172549f }, 0.04f, 1, 0.f, false, true, 1.5f);
-	AddMaterial({ 0.803922f, 0.152941f, 0.152941f }, 0.04f, 1, 0.f, false, false, 1.5f);
-	AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, false, false, 1.5f);
+	//AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, false, false, 1.5f);
+	//materials.back().textureIndex = 2;
+	//AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, false, false, 1.5f);
+	//materials.back().textureIndex = 3;
+	//AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, false, false, 1.5f);
+	//materials.back().textureIndex = 4;
+	//AddMaterial({ 0.4f, 0.4f, 0.4f }, 0.2f, 500, 0.f, false, false, 1.5f);
+	//materials.back().textureIndex = 5;
+	//AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 2.f, false, false, 1.5f);
+	//materials.back().textureIndex = 3;
+	//addModel("assets/DeskScene/bread.obj", glm::mat4(1.f), 0);
+	//addModel("assets/DeskScene/table.obj", glm::mat4(1.f), 1);
+	//addModel("assets/DeskScene/plant.obj", glm::mat4(1.f), 3);
+	//addModel("assets/DeskScene/pot.obj", glm::mat4(1.f), 4);
+	//addModel("assets/DeskScene/lamp.obj", glm::mat4(1.f), 5);
+	//addModel("assets/DeskScene/lampstand.obj", glm::mat4(1.f), 2);
+
+	AddMaterial({ 0.7, 0.34, 0.21 }, 0.2f, 500, 0.f, false, true, 1.5f);
+	addModel("assets/bunny.obj", glm::mat4(3.f), 0);
+	AddMaterial({ 0.84, 0.96, 0.99 }, 0.2f, 500, 0.f, true, false, 1.5f);
+	addPlane({ 0.f, 1.f, 0.f }, 0, 1);
+	textures.push_back(new Texture("assets/earth.jpg"));
+	AddMaterial({ 1, 1, 1 }, 0.2f, 500, 0.f, false, false, 1.5f);
 	materials.back().textureIndex = 1;
-	AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, false, false, 1.33f);
-	materials.back().textureIndex = 2;
-	AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, false, false, 1.46f);
-	AddMaterial({ 0.803922f, 0.803922f, 0.803922f }, 0.04f, 1, 0.f, true, false, 1.5f);
-	//addSphere(glm::vec3(0.f, -200.f, 0.f), 200.f, 6);
-	//addSphere(glm::vec3(1.f, 0.f , 0.f), 1.f, 4);
-	//addSphere(glm::vec3(-1.f, 0.0f, 0.f), 1.f, 3);
-	//
-	glm::mat4 transform = glm::rotate(glm::mat4(1.f), -glm::pi<float>() / 2, { 0.f, 1.f, 0.f });
-	//glm::mat4 transform = glm::translate(glm::mat4(1.f), glm::vec3(0.5f, 0.f, -3.f));
-	//transform = glm::rotate(transform, -glm::pi<float>() / 2, { 0.f, 1.f, 0.f });
-	//addModel("assets/rock.obj", transform, 4);
-	transform = glm::translate(glm::mat4(3.f), glm::vec3(0.f, 0.f, 0.f));
-	addModel("assets/rock.obj", transform, 4);
-	transform = glm::translate(glm::mat4(1.f), glm::vec3(5.0f, 0.f, 2.4f));
-	transform = glm::scale(transform, glm::vec3(0.2f));
-	//addModel("assets/bunny2.obj", glm::mat4(1.f), 3);
-	//addPlane({ 0.f, 0.f, 1.f }, 3.f, 0);
-	//addPlane({ 0.f, 0.f, -1.f }, 8.f, 0);
-	//addPlane({ 0.f, 1.f, 0.f }, -0.1f, 0);
-	//addPlane({ 0.f, -1.f, 0.f }, 3.f, 3);
-	//addPlane({ 1.f, 0.f, 0.f }, 3.f, 1);
-	//addPlane({ -1.f, 0.f, 0.f }, 3.f, 2);
-	//addModel("assets/Cornell/Left.obj", glm::mat4(1.f), 1);
-	//addModel("assets/Cornell/Right.obj", glm::mat4(1.f), 2);
-	//addModel("assets/Cornell/Top.obj", glm::mat4(1.f), 0);
-	transform = glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 2.6f, 0.f));
-	//addModel("assets/Cornell/Bottom.obj", transform, 0);
-	//addModel("assets/Cornell/Back.obj", glm::mat4(1.f), 0);
+	addSphere({ -2, 5.f, -6.f }, 5.f, 2);
+	////addModel("assets/Cornell/Left.obj", glm::mat4(1.f), 1);
+	////addModel("assets/Cornell/Right.obj", glm::mat4(1.f), 2);
+	////addModel("assets/Cornell/Top.obj", glm::mat4(1.f), 3);
+	////addModel("assets/Cornell/Bottom.obj", glm::mat4(1.f), 0);
+	////addModel("assets/Cornell/Back.obj", glm::mat4(1.f), 0);
 	for (unsigned int i = 0; i < shapes.size(); i++)
 	{
 		triIdx.push_back(i);
@@ -272,7 +272,7 @@ void Scene::BuildQBVH()
 {
 	unsigned int N = static_cast<unsigned int>(shapes.size());
 	// create the BVH node pool
-	qbvhNodes = (QBVHNode*)_aligned_malloc(sizeof(QBVHNode) * N * 2, 64);
+	qbvhNodes = (QBVHNode*)_aligned_malloc(sizeof(QBVHNode) * N * 2, 128);
 	//QBVHNode& root = qbvhNodes[qrootNodeIdx];
 	//BVHNode& b_root = bvhNode[rootNodeIdx];
 	auto t1 = Clock::now();
@@ -606,7 +606,6 @@ void Scene::IntersectQBVH(Ray& ray, Intersection& isect, const unsigned int node
 					break;
 				}
 			}
-			//continue;
 		}
 		else
 		{

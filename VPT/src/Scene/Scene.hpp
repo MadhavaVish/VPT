@@ -37,7 +37,7 @@ private:
 		union { struct { glm::vec3 aabbMax; unsigned int triCount; }; __m128 aabbMax4; };
 		bool isLeaf() { return triCount > 0; }
 	};
-	struct QBVHNode
+	__declspec(align(128))struct QBVHNode
 	{
 		float bminx4[4]{ 0.f }, bmaxx4[4]{ 0.f };
 		float bminy4[4]{ 0.f }, bmaxy4[4]{ 0.f };

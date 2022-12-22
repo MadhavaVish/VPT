@@ -66,6 +66,7 @@ private:
 	float FindBestSplitPlane(BVHNode& node, int& axis, float& splitPos);
 	float CalculateNodeCost(BVHNode& node);
 	bool IntersectBVH(Ray& ray, Intersection& isect) const;
+	void IntersectQBVH(Ray& ray, Intersection& isect, const unsigned int nodeIdx) const;
 public:
 	std::vector<Model*> models;
 	std::vector<Shape> shapes;

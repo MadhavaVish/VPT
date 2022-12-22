@@ -23,7 +23,7 @@ Scene::Scene()
 	materials.back().textureIndex = 2;
 	AddMaterial({ 1.f, 1.f, 1.f }, 0.2f, 500, 0.f, false, false, 1.46f);
 	AddMaterial({ 0.803922f, 0.803922f, 0.803922f }, 0.04f, 1, 0.f, true, false, 1.5f);
-	addSphere(glm::vec3(0.f, -200.f, 0.f), 200.f, 6);
+	//addSphere(glm::vec3(0.f, -200.f, 0.f), 200.f, 6);
 	//addSphere(glm::vec3(1.f, 0.f , 0.f), 1.f, 4);
 	//addSphere(glm::vec3(-1.f, 0.0f, 0.f), 1.f, 3);
 	//
@@ -32,7 +32,7 @@ Scene::Scene()
 	//transform = glm::rotate(transform, -glm::pi<float>() / 2, { 0.f, 1.f, 0.f });
 	//addModel("assets/rock.obj", transform, 4);
 	transform = glm::translate(glm::mat4(3.f), glm::vec3(0.f, 0.f, 0.f));
-	addModel("assets/bunny2.obj", transform, 4);
+	addModel("assets/rock.obj", transform, 4);
 	transform = glm::translate(glm::mat4(1.f), glm::vec3(5.0f, 0.f, 2.4f));
 	transform = glm::scale(transform, glm::vec3(0.2f));
 	//addModel("assets/bunny2.obj", glm::mat4(1.f), 3);
@@ -97,7 +97,17 @@ bool Scene::Intersect(Ray& ray, Intersection& isect) const
 	//	}
 	//}
 	//return hit;
-	return IntersectBVH(ray, isect);
+	float initial = isect.t_hit;
+	IntersectQBVH(ray, isect, qrootNodeIdx);
+	if (isect.t_hit < initial)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+	//return IntersectBVH(ray, isect);
 }
 SurfaceInteraction Scene::getSurfaceProperties(const Ray& ray, const Intersection& isect) const
 {
@@ -173,12 +183,12 @@ void Scene::BuildBVH()
 	Subdivide(rootNodeIdx);
 	auto t2 = Clock::now();
 	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-	printf("BVH (%i nodes) constructed in %.2fms.\n", nodesUsed, time_span.count() * 1000);
+	printf("BVH (%i nodes) constructed in %.8fms.\n", nodesUsed, time_span.count() * 1000);
 }
 void Scene::Flatten(unsigned int QNodeIdx, unsigned int BNodeIdx, bool isRoot)
 {
 	//BVHNode& node = bvhNode[BNodeIdx];
-	if ((BNodeIdx == rootNodeIdx || QNodeIdx == qrootNodeIdx )&& !isRoot)
+	if ((BNodeIdx == rootNodeIdx )&& !isRoot)
 	{
 		return;
 	}
@@ -190,136 +200,71 @@ void Scene::Flatten(unsigned int QNodeIdx, unsigned int BNodeIdx, bool isRoot)
 	}
 	
 	BVHNode& node = bvhNode[BNodeIdx];
-	std::vector<unsigned int>* childCandidateIndices = new std::vector<unsigned int>;
+	std::vector<unsigned int> childCandidateIndices;
 	unsigned int adoptedBVHChildren[4] = { 0 };
 	int numChildren = 0;
 	if (bvhNode[node.leftFirst].isLeaf())
 	{
-		//adopt directly
-		glm::vec3 max = bvhNode[node.leftFirst].aabbMax;
-		glm::vec3 min = bvhNode[node.leftFirst].aabbMin;
-		qNode.bminx4[numChildren] = min.x;
-		qNode.bminy4[numChildren] = min.y;
-		qNode.bminz4[numChildren] = min.z;
-		qNode.bmaxx4[numChildren] = max.x;
-		qNode.bmaxy4[numChildren] = max.y;
-		qNode.bmaxz4[numChildren] = max.z;
-		qNode.child[numChildren] = bvhNode[node.leftFirst].leftFirst;
-		qNode.count[numChildren] = bvhNode[node.leftFirst].triCount;
-		adoptedBVHChildren[numChildren] = node.leftFirst;
-		numChildren++;
+		childCandidateIndices.push_back(node.leftFirst);
 	}
 	else
 	{
-		
 		unsigned int child1 = bvhNode[node.leftFirst].leftFirst;
 		unsigned int child2 = bvhNode[node.leftFirst].leftFirst +1;
-		childCandidateIndices->push_back(child1);
-		childCandidateIndices->push_back(child2);
+		childCandidateIndices.push_back(child1);
+		childCandidateIndices.push_back(child2);
 	}
 	if (bvhNode[node.leftFirst + 1].isLeaf())
 	{
-		//adopt directly
-		BVHNode& adoptee = bvhNode[node.leftFirst + 1];
-		glm::vec3 max = adoptee.aabbMax;
-		glm::vec3 min = adoptee.aabbMin;
-		qNode.bminx4[numChildren] = min.x;
-		qNode.bminy4[numChildren] = min.y;
-		qNode.bminz4[numChildren] = min.z;
-		qNode.bmaxx4[numChildren] = max.x;
-		qNode.bmaxy4[numChildren] = max.y;
-		qNode.bmaxz4[numChildren] = max.z;
-		qNode.child[numChildren] = adoptee.leftFirst;
-		qNode.count[numChildren] = adoptee.triCount;
-		adoptedBVHChildren[numChildren] = node.leftFirst + 1;
-		numChildren++;
+		childCandidateIndices.push_back(node.leftFirst+1);
 	}
 	else
 	{
 		unsigned int child1 = bvhNode[node.leftFirst+1].leftFirst;
 		unsigned int child2 = bvhNode[node.leftFirst+1].leftFirst + 1;
-		childCandidateIndices->push_back(child1);
-		childCandidateIndices->push_back(child2);
+		childCandidateIndices.push_back(child1);
+		childCandidateIndices.push_back(child2);
 	}
-	while (1)
+	std::sort(childCandidateIndices.begin(), childCandidateIndices.end(), [&](auto const& e1, auto const& e2) {
+		return CalculateNodeCost(bvhNode[e1]) < CalculateNodeCost(bvhNode[e1]);
+	});
+	while (childCandidateIndices.size() > 0)
 	{
-		if (childCandidateIndices->size() < 1)
-		{
-			break;
-		}
-		unsigned int largest = 0;
-		float area = 0;
-		for (int i = 0; i < childCandidateIndices->size(); i++)
-		{
-			float candidateArea = CalculateNodeCost(bvhNode[(*childCandidateIndices)[i]]);
-			if (candidateArea > area)
-			{
-				area = candidateArea;
-				largest = i;
-			}
-		}
-		//adopt largest
-		// iflargest is leaf else increment qnodesused
-		unsigned int adopted =( *childCandidateIndices)[largest];
+		unsigned int adopted = childCandidateIndices.back();
+		childCandidateIndices.pop_back();
 		BVHNode& adoptee = bvhNode[adopted];
-		if (adoptee.isLeaf()) {
-			glm::vec3 max = adoptee.aabbMax;
-			glm::vec3 min = adoptee.aabbMin;
-			qNode.bminx4[numChildren] = min.x;
-			qNode.bminy4[numChildren] = min.y;
-			qNode.bminz4[numChildren] = min.z;
-			qNode.bmaxx4[numChildren] = max.x;
-			qNode.bmaxy4[numChildren] = max.y;
-			qNode.bmaxz4[numChildren] = max.z;
+
+		glm::vec3 min = adoptee.aabbMin;
+		qNode.bminx4[numChildren] = min.x;
+		qNode.bminy4[numChildren] = min.y;
+		qNode.bminz4[numChildren] = min.z;
+		glm::vec3 max = adoptee.aabbMax;
+		qNode.bmaxx4[numChildren] = max.x;
+		qNode.bmaxy4[numChildren] = max.y;
+		qNode.bmaxz4[numChildren] = max.z;
+
+		adoptedBVHChildren[numChildren] = adopted;
+		if (adoptee.isLeaf())
+		{
 			qNode.child[numChildren] = adoptee.leftFirst;
 			qNode.count[numChildren] = adoptee.triCount;
-			adoptedBVHChildren[numChildren] = adopted;
-			numChildren++;
 		}
 		else
 		{
-			glm::vec3 max = adoptee.aabbMax;
-			glm::vec3 min = adoptee.aabbMin;
-			qNode.bminx4[numChildren] = min.x;
-			qNode.bminy4[numChildren] = min.y;
-			qNode.bminz4[numChildren] = min.z;
-			qNode.bmaxx4[numChildren] = max.x;
-			qNode.bmaxy4[numChildren] = max.y;
-			qNode.bmaxz4[numChildren] = max.z;
 			qNode.child[numChildren] = qnodesUsed++;
 			qNode.count[numChildren] = 0;
-			adoptedBVHChildren[numChildren] = adopted;
-			numChildren++;
-			
+			Flatten(qNode.child[numChildren], adopted, false);
 		}
-		// have max number of children big nice
-		if (numChildren == 4)
-			break;
-		//delete last adopted child from candidates
-		std::swap((*childCandidateIndices)[largest], (*childCandidateIndices)[childCandidateIndices->size() - 1]);
-		childCandidateIndices->pop_back();
-
-		//get children of adopted node 
-		if (bvhNode[adopted].isLeaf())
-			continue;
-		else
-		{
-			unsigned int child1 = bvhNode[adopted].leftFirst;
-			unsigned int child2 = bvhNode[adopted].leftFirst + 1;
-			childCandidateIndices->push_back(child1);
-			childCandidateIndices->push_back(child2);
-		}
-
+		numChildren++;
 	}
 	// flatten children
-	for (int i = 0; i < 4; i++)
-	{
-		if (qNode.count[i] == 0)
-		{
-			Flatten(qNode.child[i], adoptedBVHChildren[i], false);
-		}
-	}
-	delete childCandidateIndices;
+	//for (int i = 0; i < numChildren; i++)
+	//{
+	//	if (qNode.count[i] == 0)
+	//	{
+	//		Flatten(qNode.child[i], adoptedBVHChildren[i], false);
+	//	}
+	//}
 	return;
 }
 
@@ -334,7 +279,7 @@ void Scene::BuildQBVH()
 	Flatten(qrootNodeIdx, rootNodeIdx, true);
 	auto t2 = Clock::now();
 	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-	printf("QBVH (%i nodes) constructed in %.2fms.\n", qnodesUsed, time_span.count() * 1000);
+	printf("QBVH (%i nodes) constructed in %.8fms.\n", qnodesUsed, time_span.count() * 1000);
 }
 void Scene::UpdateNodeBounds(unsigned int nodeIdx)
 {
@@ -571,10 +516,10 @@ bool Scene::IntersectBVH(Ray& ray, Intersection& isect) const
 		}
 		BVHNode* child1 = &bvhNode[node->leftFirst];
 		BVHNode* child2 = &bvhNode[node->leftFirst + 1];
-		float dist1 = IntersectAABB_SSE(ray, child1->aabbMin4, child1->aabbMax4, isect.t_hit);
-		float dist2 = IntersectAABB_SSE(ray, child2->aabbMin4, child2->aabbMax4, isect.t_hit);
-		//float dist1 = IntersectAABB(ray, child1->aabbMin, child1->aabbMax, isect.t_hit);
-		//float dist2 = IntersectAABB(ray, child2->aabbMin, child2->aabbMax, isect.t_hit);
+		//float dist1 = IntersectAABB_SSE(ray, child1->aabbMin4, child1->aabbMax4, isect.t_hit);
+		//float dist2 = IntersectAABB_SSE(ray, child2->aabbMin4, child2->aabbMax4, isect.t_hit);
+		float dist1 = IntersectAABB(ray, child1->aabbMin, child1->aabbMax, isect.t_hit);
+		float dist2 = IntersectAABB(ray, child2->aabbMin, child2->aabbMax, isect.t_hit);
 
 		if (dist1 > dist2) { std::swap(dist1, dist2); std::swap(child1, child2); }
 		if (dist1 == std::numeric_limits<float>::infinity())
@@ -592,6 +537,83 @@ bool Scene::IntersectBVH(Ray& ray, Intersection& isect) const
 		}
 	}
 	return hit;
+}
+void Scene::IntersectQBVH(Ray& ray, Intersection& isect, const unsigned int nodeIdx) const
+{
+	QBVHNode* node = &qbvhNodes[nodeIdx];
+	float dists[4]{std::numeric_limits<float>::infinity()};
+
+	glm::vec3 min0{ node->bminx4[0],node->bminy4[0],node->bminz4[0] };
+	glm::vec3 min1{ node->bminx4[1],node->bminy4[1],node->bminz4[1] };
+	glm::vec3 min2{ node->bminx4[2],node->bminy4[2],node->bminz4[2] };
+	glm::vec3 min3{ node->bminx4[3],node->bminy4[3],node->bminz4[3] };
+	glm::vec3 max0{ node->bmaxx4[0],node->bmaxy4[0],node->bmaxz4[0] };
+	glm::vec3 max1{ node->bmaxx4[1],node->bmaxy4[1],node->bmaxz4[1] };
+	glm::vec3 max2{ node->bmaxx4[2],node->bmaxy4[2],node->bmaxz4[2] };
+	glm::vec3 max3{ node->bmaxx4[3],node->bmaxy4[3],node->bmaxz4[3] };
+	dists[0] = IntersectAABB(ray, min0, max0, isect.t_hit);
+	dists[1] = IntersectAABB(ray, min1, max1, isect.t_hit);
+	dists[2] = IntersectAABB(ray, min2, max2, isect.t_hit);
+	dists[3] = IntersectAABB(ray, min3, max3, isect.t_hit);
+	//struct Lol { union { struct { glm::vec3 corner; unsigned int dum; }; __m128 aabb4; }; };
+	//Lol min0, min1, min2, min3, max0, max1, max2, max3, max4;
+	//min0.corner = { node->bminx4[0],node->bminy4[0],node->bminz4[0] };
+	//min1.corner = { node->bminx4[1],node->bminy4[1],node->bminz4[1] };
+	//min2.corner = { node->bminx4[2],node->bminy4[2],node->bminz4[2] };
+	//min3.corner = { node->bminx4[3],node->bminy4[3],node->bminz4[3] };
+	//max0.corner = { node->bmaxx4[0],node->bmaxy4[0],node->bmaxz4[0] };
+	//max1.corner = { node->bmaxx4[1],node->bmaxy4[1],node->bmaxz4[1] };
+	//max2.corner = { node->bmaxx4[2],node->bmaxy4[2],node->bmaxz4[2] };
+	//max3.corner = { node->bmaxx4[3],node->bmaxy4[3],node->bmaxz4[3] };
+	//dists[0] = IntersectAABB_SSE(ray, min0.aabb4, max0.aabb4, isect.t_hit);
+	//dists[1] = IntersectAABB_SSE(ray, min1.aabb4, max1.aabb4, isect.t_hit);
+	//dists[2] = IntersectAABB_SSE(ray, min2.aabb4, max2.aabb4, isect.t_hit);
+	//dists[3] = IntersectAABB_SSE(ray, min3.aabb4, max3.aabb4, isect.t_hit);
+	int distIndices[4]{ 0,1,2,3 };
+	if (dists[0] > dists[1]) std::swap(distIndices[0], distIndices[1]);
+	if (dists[2] > dists[3]) std::swap(distIndices[2], distIndices[3]);
+	if (dists[0] > dists[2]) std::swap(distIndices[0], distIndices[2]);
+	if (dists[1] > dists[3]) std::swap(distIndices[1], distIndices[3]);
+	if (dists[1] > dists[2]) std::swap(distIndices[1], distIndices[2]);
+
+	for (int j = 0; j < 4; j++)
+	{
+		if (dists[distIndices[j]] == std::numeric_limits<float>::infinity()) continue;
+		if (node->count[distIndices[j]] > 0)
+		{
+			for (int i = 0; i < node->count[distIndices[j]]; i++)
+			{
+				const Shape& shape = shapes[triIdx[node->child[distIndices[j]] + i]];
+				switch (shape.type)
+				{
+				case ShapeType::Triangle:
+					if (shape.triangle.Intersect(ray, isect))
+					{
+						isect.objIdx = triIdx[node->child[distIndices[j]] + i];
+					}
+					break;
+				case ShapeType::Sphere:
+					if (shape.sphere.Intersect(ray, isect.t_hit))
+					{
+						isect.objIdx = triIdx[node->child[distIndices[j]] + i];
+					}
+					break;
+				case ShapeType::Plane:
+					if (shape.plane.Intersect(ray, isect.t_hit))
+					{
+						isect.objIdx = triIdx[node->child[distIndices[j]] + i];
+					}
+					break;
+				}
+			}
+			//continue;
+		}
+		else
+		{
+			IntersectQBVH(ray, isect, node->child[distIndices[j]]);
+		}
+	}
+	return;
 }
 
 bool Scene::OcclusionBVH(Ray& ray, float distance) const

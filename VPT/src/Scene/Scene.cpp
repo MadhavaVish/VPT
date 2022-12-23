@@ -43,11 +43,11 @@ Scene::Scene()
 	AddMaterial({ 1, 1, 1 }, 0.2f, 500, 0.f, false, false, 1.5f);
 	materials.back().textureIndex = 1;
 	addSphere({ -2, 5.f, -6.f }, 5.f, 2);
-	////addModel("assets/Cornell/Left.obj", glm::mat4(1.f), 1);
-	////addModel("assets/Cornell/Right.obj", glm::mat4(1.f), 2);
-	////addModel("assets/Cornell/Top.obj", glm::mat4(1.f), 3);
-	////addModel("assets/Cornell/Bottom.obj", glm::mat4(1.f), 0);
-	////addModel("assets/Cornell/Back.obj", glm::mat4(1.f), 0);
+	//addModel("assets/Cornell/Left.obj", glm::mat4(1.f), 1);
+	//addModel("assets/Cornell/Right.obj", glm::mat4(1.f), 2);
+	//addModel("assets/Cornell/Top.obj", glm::mat4(1.f), 3);
+	//addModel("assets/Cornell/Bottom.obj", glm::mat4(1.f), 0);
+	//addModel("assets/Cornell/Back.obj", glm::mat4(1.f), 0);
 	for (unsigned int i = 0; i < shapes.size(); i++)
 	{
 		triIdx.push_back(i);
@@ -97,17 +97,17 @@ bool Scene::Intersect(Ray& ray, Intersection& isect) const
 	//	}
 	//}
 	//return hit;
-	//float initial = isect.t_hit;
-	//IntersectQBVH(ray, isect, qrootNodeIdx);
-	//if (isect.t_hit < initial)
-	//{
-	//	return true;
-	//}
-	//else
-	//{
-	//	return false;
-	//}
-	return IntersectBVH(ray, isect);
+	float initial = isect.t_hit;
+	IntersectQBVH(ray, isect, qrootNodeIdx);
+	if (isect.t_hit < initial)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+	//return IntersectBVH(ray, isect);
 }
 SurfaceInteraction Scene::getSurfaceProperties(const Ray& ray, const Intersection& isect) const
 {
@@ -201,36 +201,35 @@ void Scene::Flatten(unsigned int QNodeIdx, unsigned int BNodeIdx, bool isRoot, i
 		qNode.child[i] = 0;
 		qNode.count[i] = 0;
 	}
-	
 	BVHNode& node = bvhNode[BNodeIdx];
+
 	std::vector<unsigned int> childCandidateIndices;
-	unsigned int adoptedBVHChildren[4] = { 0 };
+	childCandidateIndices.reserve(4);
+
 	int numChildren = 0;
+
 	if (bvhNode[node.leftFirst].isLeaf())
 	{
-		childCandidateIndices.push_back(node.leftFirst);
+		childCandidateIndices.emplace_back(node.leftFirst);
 	}
 	else
 	{
-		unsigned int child1 = bvhNode[node.leftFirst].leftFirst;
-		unsigned int child2 = bvhNode[node.leftFirst].leftFirst +1;
-		childCandidateIndices.push_back(child1);
-		childCandidateIndices.push_back(child2);
+		childCandidateIndices.emplace_back(bvhNode[node.leftFirst].leftFirst);
+		childCandidateIndices.emplace_back(bvhNode[node.leftFirst].leftFirst + 1);
 	}
 	if (bvhNode[node.leftFirst + 1].isLeaf())
 	{
-		childCandidateIndices.push_back(node.leftFirst+1);
+		childCandidateIndices.emplace_back(node.leftFirst+1);
 	}
 	else
 	{
-		unsigned int child1 = bvhNode[node.leftFirst+1].leftFirst;
-		unsigned int child2 = bvhNode[node.leftFirst+1].leftFirst + 1;
-		childCandidateIndices.push_back(child1);
-		childCandidateIndices.push_back(child2);
+		childCandidateIndices.emplace_back(bvhNode[node.leftFirst + 1].leftFirst);
+		childCandidateIndices.emplace_back(bvhNode[node.leftFirst + 1].leftFirst + 1);
 	}
 	std::sort(childCandidateIndices.begin(), childCandidateIndices.end(), [&](auto const& e1, auto const& e2) {
 		return CalculateNodeCost(bvhNode[e1]) < CalculateNodeCost(bvhNode[e1]);
 	});
+
 	while (childCandidateIndices.size() > 0)
 	{
 		unsigned int adopted = childCandidateIndices.back();
@@ -246,7 +245,6 @@ void Scene::Flatten(unsigned int QNodeIdx, unsigned int BNodeIdx, bool isRoot, i
 		qNode.bmaxy4[numChildren] = max.y;
 		qNode.bmaxz4[numChildren] = max.z;
 
-		adoptedBVHChildren[numChildren] = adopted;
 		if (adoptee.isLeaf())
 		{
 			qNode.child[numChildren] = adoptee.leftFirst;
@@ -260,14 +258,6 @@ void Scene::Flatten(unsigned int QNodeIdx, unsigned int BNodeIdx, bool isRoot, i
 		}
 		numChildren++;
 	}
-	// flatten children
-	//for (int i = 0; i < numChildren; i++)
-	//{
-	//	if (qNode.count[i] == 0)
-	//	{
-	//		Flatten(qNode.child[i], adoptedBVHChildren[i], false);
-	//	}
-	//}
 	return;
 }
 
@@ -544,37 +534,47 @@ bool Scene::IntersectBVH(Ray& ray, Intersection& isect) const
 	}
 	return hit;
 }
+
+__m128 IntersectQuadAABB(Ray& ray, __m128 minx4, __m128 miny4, __m128 minz4, __m128 maxx4, __m128 maxy4, __m128 maxz4, const float& t_hit)
+{
+	__m128 ox = _mm_set_ps1(ray.origin.x), oy = _mm_set_ps1(ray.origin.y), oz = _mm_set_ps1(ray.origin.z);
+	__m128 idx = _mm_set_ps1(ray.invDir.x), idy = _mm_set_ps1(ray.invDir.y), idz = _mm_set_ps1(ray.invDir.z);
+	__m128 hit = _mm_set_ps1(t_hit);
+	__m128 tx1 = _mm_mul_ps(_mm_sub_ps(minx4, ox), idx);
+	__m128 tx2 = _mm_mul_ps(_mm_sub_ps(maxx4, ox), idx);
+	__m128 tmin = _mm_min_ps(tx1, tx2), tmax = _mm_max_ps(tx1, tx2);
+	__m128 ty1 = _mm_mul_ps(_mm_sub_ps(miny4, oy), idy);
+	__m128 ty2 = _mm_mul_ps(_mm_sub_ps(maxy4, oy), idy);
+	tmin = _mm_max_ps(tmin, _mm_min_ps(ty1, ty2)), tmax = _mm_min_ps(tmax, _mm_max_ps(ty1, ty2));
+	__m128 tz1 = _mm_mul_ps(_mm_sub_ps(minz4, oz), idz);
+	__m128 tz2 = _mm_mul_ps(_mm_sub_ps(maxz4, oz), idz);
+	tmin = _mm_max_ps(tmin, _mm_min_ps(tz1, tz2)), tmax = _mm_min_ps(tmax, _mm_max_ps(tz1, tz2));
+	__m128 dists = _mm_set_ps1(std::numeric_limits<float>::infinity());
+	__m128 maxge = _mm_cmpgt_ps(tmax, _mm_set_ps1(0.f));
+	__m128 lesst = _mm_cmplt_ps(tmin, hit);
+	__m128 maxgemin = _mm_cmpge_ps(tmax, tmin);
+	__m128 mask = _mm_and_ps(maxge, _mm_and_ps(lesst, maxgemin));
+	return _mm_blendv_ps(dists, tmin, mask);
+}
 void Scene::IntersectQBVH(Ray& ray, Intersection& isect, const unsigned int nodeIdx) const
 {
 	QBVHNode* node = &qbvhNodes[nodeIdx];
-	float dists[4]{std::numeric_limits<float>::infinity()};
+	alignas(16) float dists[4];
 
-	glm::vec3 min0{ node->bminx4[0],node->bminy4[0],node->bminz4[0] };
-	glm::vec3 min1{ node->bminx4[1],node->bminy4[1],node->bminz4[1] };
-	glm::vec3 min2{ node->bminx4[2],node->bminy4[2],node->bminz4[2] };
-	glm::vec3 min3{ node->bminx4[3],node->bminy4[3],node->bminz4[3] };
-	glm::vec3 max0{ node->bmaxx4[0],node->bmaxy4[0],node->bmaxz4[0] };
-	glm::vec3 max1{ node->bmaxx4[1],node->bmaxy4[1],node->bmaxz4[1] };
-	glm::vec3 max2{ node->bmaxx4[2],node->bmaxy4[2],node->bmaxz4[2] };
-	glm::vec3 max3{ node->bmaxx4[3],node->bmaxy4[3],node->bmaxz4[3] };
-	dists[0] = IntersectAABB(ray, min0, max0, isect.t_hit);
-	dists[1] = IntersectAABB(ray, min1, max1, isect.t_hit);
-	dists[2] = IntersectAABB(ray, min2, max2, isect.t_hit);
-	dists[3] = IntersectAABB(ray, min3, max3, isect.t_hit);
-	//struct Lol { union { struct { glm::vec3 corner; unsigned int dum; }; __m128 aabb4; }; };
-	//Lol min0, min1, min2, min3, max0, max1, max2, max3, max4;
-	//min0.corner = { node->bminx4[0],node->bminy4[0],node->bminz4[0] };
-	//min1.corner = { node->bminx4[1],node->bminy4[1],node->bminz4[1] };
-	//min2.corner = { node->bminx4[2],node->bminy4[2],node->bminz4[2] };
-	//min3.corner = { node->bminx4[3],node->bminy4[3],node->bminz4[3] };
-	//max0.corner = { node->bmaxx4[0],node->bmaxy4[0],node->bmaxz4[0] };
-	//max1.corner = { node->bmaxx4[1],node->bmaxy4[1],node->bmaxz4[1] };
-	//max2.corner = { node->bmaxx4[2],node->bmaxy4[2],node->bmaxz4[2] };
-	//max3.corner = { node->bmaxx4[3],node->bmaxy4[3],node->bmaxz4[3] };
-	//dists[0] = IntersectAABB_SSE(ray, min0.aabb4, max0.aabb4, isect.t_hit);
-	//dists[1] = IntersectAABB_SSE(ray, min1.aabb4, max1.aabb4, isect.t_hit);
-	//dists[2] = IntersectAABB_SSE(ray, min2.aabb4, max2.aabb4, isect.t_hit);
-	//dists[3] = IntersectAABB_SSE(ray, min3.aabb4, max3.aabb4, isect.t_hit);
+	//glm::vec3 min0{ node->bminx4[0],node->bminy4[0],node->bminz4[0] };
+	//glm::vec3 min1{ node->bminx4[1],node->bminy4[1],node->bminz4[1] };
+	//glm::vec3 min2{ node->bminx4[2],node->bminy4[2],node->bminz4[2] };
+	//glm::vec3 min3{ node->bminx4[3],node->bminy4[3],node->bminz4[3] };
+	//glm::vec3 max0{ node->bmaxx4[0],node->bmaxy4[0],node->bmaxz4[0] };
+	//glm::vec3 max1{ node->bmaxx4[1],node->bmaxy4[1],node->bmaxz4[1] };
+	//glm::vec3 max2{ node->bmaxx4[2],node->bmaxy4[2],node->bmaxz4[2] };
+	//glm::vec3 max3{ node->bmaxx4[3],node->bmaxy4[3],node->bmaxz4[3] };
+	//dists[0] = IntersectAABB(ray, min0, max0, isect.t_hit);
+	//dists[1] = IntersectAABB(ray, min1, max1, isect.t_hit);
+	//dists[2] = IntersectAABB(ray, min2, max2, isect.t_hit);
+	//dists[3] = IntersectAABB(ray, min3, max3, isect.t_hit);
+
+	_mm_store_ps(dists, IntersectQuadAABB(ray, node->minx4, node->miny4, node->minz4, node->maxx4, node->maxy4, node->maxz4, isect.t_hit));
 	int distIndices[4]{ 0,1,2,3 };
 	if (dists[0] > dists[1]) std::swap(distIndices[0], distIndices[1]);
 	if (dists[2] > dists[3]) std::swap(distIndices[2], distIndices[3]);

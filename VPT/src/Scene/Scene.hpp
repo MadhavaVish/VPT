@@ -39,11 +39,34 @@ private:
 	};
 	__declspec(align(128))struct QBVHNode
 	{
-		float bminx4[4]{ 0.f }, bmaxx4[4]{ 0.f };
-		float bminy4[4]{ 0.f }, bmaxy4[4]{ 0.f };
-		float bminz4[4]{ 0.f }, bmaxz4[4]{ 0.f };
+		QBVHNode() { minx4 = miny4 = minz4 = maxx4 = maxy4 = maxz4 = _mm_set1_ps(0.f); };
+		union {
+			struct { float bminx4[4]; };
+			__m128 minx4;
+		};
+		union {
+			struct { float bminy4[4]; };
+			__m128 miny4;
+		};
+		union {
+			struct { float bminz4[4]; };
+			__m128 minz4;
+		};
+		union {
+			struct { float bmaxx4[4]; };
+			__m128 maxx4;
+		};
+		union {
+			struct { float bmaxy4[4]; };
+			__m128 maxy4;
+		};
+		union {
+			struct { float bmaxz4[4]; };
+			__m128 maxz4;
+		};
 		int child[4], count[4];
 	};
+
 	struct Bin { AABB bounds; int triCount = 0; };
 public:
 	Scene();

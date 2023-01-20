@@ -83,9 +83,9 @@ std::vector<Triangle> Model::GetTriangles() const
     return tris;
 }
 
-bool Triangle::Intersect(Ray& ray, Intersection& isect) const
+const bool Triangle::Intersect(Ray& ray, Intersection& isect) const
 {
-    if (model->vertices.size() == 0) return false;
+    //if (model->vertices.size() == 0) return false;
     glm::vec3 v0 = model->vertices[v_indices[0]], v1= model->vertices[v_indices[1]], v2= model->vertices[v_indices[2]];
     glm::vec3 A = v1 - v0;
     glm::vec3 B = v2 - v0;
@@ -108,11 +108,10 @@ bool Triangle::Intersect(Ray& ray, Intersection& isect) const
         isect.t_hit = t;
         isect.barycentric = glm::vec2(u, v);
         return true;
-
     }
     return false;
 }
-bool Triangle::Intersect(Ray& ray, float& t_hit) const
+const bool Triangle::Intersect(Ray& ray, float& t_hit) const
 {
     if (model->vertices.size() == 0) return false;
     glm::vec3 v0 = model->vertices[v_indices[0]], v1 = model->vertices[v_indices[1]], v2 = model->vertices[v_indices[2]];

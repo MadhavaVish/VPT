@@ -71,15 +71,13 @@ private:
 public:
 	Scene();
 	~Scene();
-	bool Intersect(Ray& ray, Intersection& isect) const;
+	const bool Intersect(Ray& ray, Intersection& isect) const;
 	SurfaceInteraction getSurfaceProperties(const Ray& ray, const Intersection& isect) const;
-	glm::vec3 getSkyColor(const Ray& ray) const;
+	const glm::vec3 getSkyColor(const Ray& ray) const;
 
 	void AddMaterial(const glm::vec3 albedo, const float& ks, const float& exponent, const float& radiance, const bool& mirror, const bool& glass, const float& ior);
 	void addModel(const std::string& filepath, Transform transform, uint32_t material);
-	void addSphere(glm::vec3 pos, float r, uint32_t material);
-	void addPlane(glm::vec3 normal, float dist, uint32_t material);
-	bool OcclusionBVH(Ray& ray, float distance) const;
+	const bool OcclusionBVH(Ray& ray, float distance) const;
 private:
 	void BuildBVH();
 	void BuildQBVH();
@@ -88,11 +86,11 @@ private:
 	void UpdateNodeBounds(unsigned int nodeIdx);
 	float FindBestSplitPlane(BVHNode& node, int& axis, float& splitPos);
 	float CalculateNodeCost(BVHNode& node);
-	bool IntersectBVH(Ray& ray, Intersection& isect) const;
-	void IntersectQBVH(Ray& ray, Intersection& isect, const unsigned int nodeIdx) const;
+	const bool IntersectBVH(Ray& ray, Intersection& isect) const;
+	const void IntersectQBVH(Ray& ray, Intersection& isect, const unsigned int nodeIdx) const;
 public:
 	std::vector<Model*> models;
-	std::vector<Shape> shapes;
+	std::vector<Triangle> Triangles;
 	std::vector<Material> materials;
 	std::vector<Texture*> textures;
 private:

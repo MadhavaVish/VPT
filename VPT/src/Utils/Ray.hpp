@@ -16,7 +16,7 @@ __declspec(align(64))struct Ray
 	};
 
 };
-static Ray getRay(const glm::vec3& o, const glm::vec3& dir) 
+static inline Ray getRay(const glm::vec3& o, const glm::vec3& dir) 
 {
 	Ray r;
 	r.origin = o;

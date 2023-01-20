@@ -56,8 +56,8 @@ public:
 		glm::vec3 v0 = model->vertices[v_indices[0]], v1 = model->vertices[v_indices[1]], v2 = model->vertices[v_indices[2]];
 		centroid = (v0 + v1 + v2)/3.f;
 	}
-	bool Intersect(Ray& ray, Intersection& isect) const;
-	bool Intersect(Ray& ray, float& t_hit) const;
+	const bool Intersect(Ray& ray, Intersection& isect) const;
+	const bool Intersect(Ray& ray, float& t_hit) const;
 	SurfaceInteraction getSurfaceProperties(const Ray& ray, const Intersection& isect) const;
 	AABB getBounds();
 	glm::vec3 centroid;

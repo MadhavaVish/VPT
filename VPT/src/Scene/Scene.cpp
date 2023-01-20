@@ -35,14 +35,6 @@ Scene::Scene()
 	//addModel("assets/DeskScene/lamp.obj", glm::mat4(1.f), 5);
 	//addModel("assets/DeskScene/lampstand.obj", glm::mat4(1.f), 2);
 
-	//AddMaterial({ 0.7, 0.34, 0.21 }, 0.2f, 500, 0.f, false, true, 1.5f);
-	//addModel("assets/bunny.obj", glm::mat4(3.f), 0);
-	//AddMaterial({ 0.84, 0.96, 0.99 }, 0.2f, 500, 0.f, true, false, 1.5f);
-	//addPlane({ 0.f, 1.f, 0.f }, 0, 1);
-	//textures.push_back(new Texture("assets/earth.jpg"));
-	//AddMaterial({ 1, 1, 1 }, 0.2f, 500, 0.f, false, false, 1.5f);
-	//materials.back().textureIndex = 1;
-	//addSphere({ -2, 5.f, -6.f }, 5.f, 2);
 	AddMaterial({ 0.7, 0.34, 0.21 }, 0.2f, 500, 0.f, false, true, 1.5f);
 	addModel("assets/bunny.obj", glm::mat4(1.f), 0);
 	AddMaterial({ 0.156863f, 0.803922f, 0.172549f }, 0.2f, 500, 0.f, false, false, 1.5f);
@@ -53,7 +45,7 @@ Scene::Scene()
 	addModel("assets/Cornell/Top.obj", glm::mat4(1.f), 3);
 	addModel("assets/Cornell/Bottom.obj", glm::mat4(1.f), 3);
 	addModel("assets/Cornell/Back.obj", glm::mat4(1.f), 3);
-	for (unsigned int i = 0; i < shapes.size(); i++)
+	for (unsigned int i = 0; i < Triangles.size(); i++)
 	{
 		triIdx.push_back(i);
 	}
@@ -71,37 +63,8 @@ Scene::~Scene()
 		delete texture;
 	}
 }
-bool Scene::Intersect(Ray& ray, Intersection& isect) const
+const bool Scene::Intersect(Ray& ray, Intersection& isect) const
 {
-	//bool hit = false;
-	//for (uint32_t i = 0; i < shapes.size(); i++)
-	//{
-	//	switch (shapes[i].type)
-	//	{
-	//	case ShapeType::Triangle:
-	//		if (shapes[i].triangle.Intersect(ray, isect))
-	//		{
-	//			hit = true;
-	//			isect.objIdx = i;
-	//		}
-	//		break;
-	//	case ShapeType::Sphere:
-	//		if (shapes[i].sphere.Intersect(ray, isect))
-	//		{
-	//			hit = true;
-	//			isect.objIdx = i;
-	//		}
-	//		break;
-	//	case ShapeType::Plane:
-	//		if (shapes[i].plane.Intersect(ray, isect))
-	//		{
-	//			hit = true;
-	//			isect.objIdx = i;
-	//		}
-	//		break;
-	//	}
-	//}
-	//return hit;
 	float initial = isect.t_hit;
 	IntersectQBVH(ray, isect, qrootNodeIdx);
 	if (isect.t_hit < initial)
@@ -116,20 +79,7 @@ bool Scene::Intersect(Ray& ray, Intersection& isect) const
 }
 SurfaceInteraction Scene::getSurfaceProperties(const Ray& ray, const Intersection& isect) const
 {
-	switch (shapes[isect.objIdx].type)
-	{
-	case ShapeType::Triangle:
-		return shapes[isect.objIdx].triangle.getSurfaceProperties(ray, isect);
-		break;
-	case ShapeType::Sphere:
-		return shapes[isect.objIdx].sphere.getSurfaceProperties(ray, isect);
-		break;
-	case ShapeType::Plane:
-		return shapes[isect.objIdx].plane.getSurfaceProperties(ray, isect);
-		break;
-	default:
-		break;
-	}
+	return Triangles[isect.objIdx].getSurfaceProperties(ray, isect);
 }
 void Scene::AddMaterial(const glm::vec3 albedo, const float& ks, const float& exponent, const float &radiance, const bool &mirror, const bool &glass, const float &ior)
 {
@@ -149,19 +99,12 @@ void Scene::addModel(const std::string& filepath, Transform transform, uint32_t 
 	std::vector<Triangle> tris = models.back()->GetTriangles();
 	for (auto &tri : tris)
 	{
-		shapes.push_back(Shape(tri));
+		Triangles.push_back(tri);
 	}
 
 }
-void Scene::addSphere(glm::vec3 pos, float r, uint32_t material)
-{
-	shapes.push_back(Shape(Sphere(pos, r, material)));
-}
-void Scene::addPlane(glm::vec3 normal, float dist, uint32_t material)
-{
-	shapes.push_back(Shape(Plane(normal, dist, material)));
-}
-glm::vec3 Scene::getSkyColor(const Ray& ray) const
+
+const glm::vec3 Scene::getSkyColor(const Ray& ray) const
 {
 	//return glm::vec3(0.f);
 ;	float phi = std::atan2(-ray.direction.z, ray.direction.x)+glm::pi<float>();
@@ -174,7 +117,7 @@ glm::vec3 Scene::getSkyColor(const Ray& ray) const
 static int BVHDepth = 0;
 void Scene::BuildBVH()
 {
-	unsigned int N = static_cast<unsigned int>(shapes.size());
+	unsigned int N = static_cast<unsigned int>(Triangles.size());
 	// create the BVH node pool
 	bvhNode = (BVHNode*)_aligned_malloc(sizeof(BVHNode) * N * 2, 64);
 	// populate triangle index array
@@ -191,6 +134,7 @@ void Scene::BuildBVH()
 	printf("BVH (%i nodes) constructed in %.8fms.\n", nodesUsed, time_span.count() * 1000);
 	std::cout << "BVH Depth: " << BVHDepth << std::endl;
 }
+
 static int QBVHDepth = 0;
 void Scene::Flatten(unsigned int QNodeIdx, unsigned int BNodeIdx, bool isRoot, int depth)
 {
@@ -268,7 +212,7 @@ void Scene::Flatten(unsigned int QNodeIdx, unsigned int BNodeIdx, bool isRoot, i
 
 void Scene::BuildQBVH()
 {
-	unsigned int N = static_cast<unsigned int>(shapes.size());
+	unsigned int N = static_cast<unsigned int>(Triangles.size());
 	// create the BVH node pool
 	qbvhNodes = (QBVHNode*)_aligned_malloc(sizeof(QBVHNode) * N * 2, 128);
 	//QBVHNode& root = qbvhNodes[qrootNodeIdx];
@@ -287,19 +231,8 @@ void Scene::UpdateNodeBounds(unsigned int nodeIdx)
 	for (unsigned int first = node.leftFirst, i = 0; i < node.triCount; i++)
 	{
 		unsigned int leafTriIdx = triIdx[first + i];
-		Shape& leafTri = shapes[leafTriIdx];
-		switch (leafTri.type)
-		{
-		case ShapeType::Triangle:
-			nodeBound.grow(leafTri.triangle.getBounds());
-			break;
-		case ShapeType::Sphere:
-			nodeBound.grow(leafTri.sphere.getBounds());
-			break;
-		case ShapeType::Plane:
-			nodeBound.grow(leafTri.plane.getBounds());
-			break;
-		}
+		Triangle& leafTri = Triangles[leafTriIdx];
+		nodeBound.grow(leafTri.getBounds());
 	}
 	node.aabbMin = nodeBound.bmin;
 	node.aabbMax = nodeBound.bmax;
@@ -314,20 +247,8 @@ float Scene::FindBestSplitPlane(BVHNode& node, int& axis, float& splitPos)
 		float boundsMin = std::numeric_limits<float>::infinity(), boundsMax = -std::numeric_limits<float>::infinity();
 		for (unsigned int i = 0; i < node.triCount; i++)
 		{
-			Shape& shape = shapes[triIdx[node.leftFirst + i]];
-			glm::vec3 cent;
-			switch (shape.type)
-			{
-			case ShapeType::Triangle:
-				cent = shape.triangle.centroid;
-				break;
-			case ShapeType::Sphere:
-				cent = shape.sphere.position;
-				break;
-			case ShapeType::Plane:
-				cent = -shape.plane.normal * shapes[triIdx[i]].plane.distance;
-				break;
-			}
+			Triangle& tri = Triangles[triIdx[node.leftFirst + i]];
+			glm::vec3 cent = tri.centroid;
 			boundsMin = std::min(boundsMin, cent[a]);
 			boundsMax = std::max(boundsMax, cent[a]);
 		}
@@ -337,30 +258,11 @@ float Scene::FindBestSplitPlane(BVHNode& node, int& axis, float& splitPos)
 		float scale = BINS / (boundsMax - boundsMin);
 		for (unsigned int i = 0; i < node.triCount; i++)
 		{
-			Shape& shape = shapes[triIdx[node.leftFirst + i]];
-			glm::vec3 cent;
-			int binIdx;
-			switch (shape.type)
-			{
-			case ShapeType::Triangle:
-				cent = shape.triangle.centroid;
-				binIdx = std::min(BINS - 1, (int)((cent[a] - boundsMin) * scale));
-				bin[binIdx].triCount++;
-				bin[binIdx].bounds.grow(shape.triangle.getBounds());
-				break;
-			case ShapeType::Sphere:
-				cent = shape.sphere.position;
-				binIdx = std::min(BINS - 1, (int)((cent[a] - boundsMin) * scale));
-				bin[binIdx].triCount++;
-				bin[binIdx].bounds.grow(shape.sphere.getBounds());
-				break;
-			case ShapeType::Plane:
-				cent = -shape.plane.normal * shapes[triIdx[i]].plane.distance;
-				binIdx = std::min(BINS - 1, (int)((cent[a] - boundsMin) * scale));
-				bin[binIdx].triCount++;
-				bin[binIdx].bounds.grow(shape.plane.getBounds());
-				break;
-			}
+			Triangle& tri = Triangles[triIdx[node.leftFirst + i]];
+			glm::vec3 cent = tri.centroid;
+			int binIdx = std::min(BINS - 1, (int)((cent[a] - boundsMin) * scale));
+			bin[binIdx].triCount++;
+			bin[binIdx].bounds.grow(tri.getBounds());
 		}
 		// gather data for the 7 planes between the 8 bins
 		float leftArea[BINS - 1], rightArea[BINS - 1];
@@ -413,20 +315,9 @@ void Scene::Subdivide(unsigned int nodeIdx, int depth)
 	int j = i + node.triCount - 1;
 	while (i <= j)
 	{
-		Shape& shape = shapes[triIdx[i]];
-		glm::vec3 cent;
-		switch (shape.type)
-		{
-		case ShapeType::Triangle:
-			cent = shape.triangle.centroid;
-			break;
-		case ShapeType::Sphere:
-			cent = shape.sphere.position;
-			break;
-		case ShapeType::Plane:
-			cent = -shape.plane.normal * shapes[triIdx[i]].plane.distance;
-			break;
-		}
+		Triangle& tri = Triangles[triIdx[i]];
+		glm::vec3 cent = tri.centroid;
+		
 		if (cent[axis] < splitPos)
 			i++;
 		else
@@ -460,17 +351,8 @@ inline float IntersectAABB(const Ray& ray, const glm::vec3& bmin, const glm::vec
 	tmin = glm::max(tmin, glm::min(tz1, tz2)), tmax = glm::min(tmax, glm::max(tz1, tz2));
 	if (tmax >= tmin && tmin < t_hit && tmax > 0) return tmin; else return std::numeric_limits<float>::infinity();
 }
-inline float IntersectAABB_SSE(const Ray& ray, const __m128& bmin4, const __m128& bmax4, const float& t_hit)
-{
-	static __m128 mask4 = _mm_cmpeq_ps(_mm_setzero_ps(), _mm_set_ps(1, 0, 0, 0));
-	__m128 t1 = _mm_mul_ps(_mm_sub_ps(_mm_and_ps(bmin4, mask4), ray.O4), ray.rD4);
-	__m128 t2 = _mm_mul_ps(_mm_sub_ps(_mm_and_ps(bmax4, mask4), ray.O4), ray.rD4);
-	__m128 vmax4 = _mm_max_ps(t1, t2), vmin4 = _mm_min_ps(t1, t2);
-	float tmax = std::min(vmax4.m128_f32[0], std::min(vmax4.m128_f32[1], vmax4.m128_f32[2]));
-	float tmin = std::max(vmin4.m128_f32[0], std::max(vmin4.m128_f32[1], vmin4.m128_f32[2]));
-	if (tmax >= tmin && tmin < t_hit && tmax > 0) return tmin; else return std::numeric_limits<float>::infinity();
-}
-bool Scene::IntersectBVH(Ray& ray, Intersection& isect) const
+
+const bool Scene::IntersectBVH(Ray& ray, Intersection& isect) const
 {
 	BVHNode* node = &bvhNode[rootNodeIdx], * stack[64];
 	unsigned int stackPtr = 0;
@@ -481,30 +363,11 @@ bool Scene::IntersectBVH(Ray& ray, Intersection& isect) const
 		{
 			for (unsigned int i = 0; i < node->triCount; i++)
 			{
-				const Shape& shape = shapes[triIdx[node->leftFirst + i]];
-				switch (shape.type)
+				const Triangle& tri = Triangles[triIdx[node->leftFirst + i]];
+				if (tri.Intersect(ray, isect))
 				{
-				case ShapeType::Triangle:
-					if (shape.triangle.Intersect(ray, isect))
-					{
-						hit = true;
-						isect.objIdx = triIdx[node->leftFirst + i];
-					}
-					break;
-				case ShapeType::Sphere:
-					if (shape.sphere.Intersect(ray, isect.t_hit))
-					{
-						hit = true;
-						isect.objIdx = triIdx[node->leftFirst + i];
-					}
-					break;
-				case ShapeType::Plane:
-					if (shape.plane.Intersect(ray, isect.t_hit))
-					{
-						hit = true;
-						isect.objIdx = triIdx[node->leftFirst + i];
-					}
-					break;
+					hit = true;
+					isect.objIdx = triIdx[node->leftFirst + i];
 				}
 				continue;
 			}
@@ -517,8 +380,6 @@ bool Scene::IntersectBVH(Ray& ray, Intersection& isect) const
 		}
 		BVHNode* child1 = &bvhNode[node->leftFirst];
 		BVHNode* child2 = &bvhNode[node->leftFirst + 1];
-		//float dist1 = IntersectAABB_SSE(ray, child1->aabbMin4, child1->aabbMax4, isect.t_hit);
-		//float dist2 = IntersectAABB_SSE(ray, child2->aabbMin4, child2->aabbMax4, isect.t_hit);
 		float dist1 = IntersectAABB(ray, child1->aabbMin, child1->aabbMax, isect.t_hit);
 		float dist2 = IntersectAABB(ray, child2->aabbMin, child2->aabbMax, isect.t_hit);
 
@@ -540,7 +401,7 @@ bool Scene::IntersectBVH(Ray& ray, Intersection& isect) const
 	return hit;
 }
 
-__m128 IntersectQuadAABB(Ray& ray, __m128 minx4, __m128 miny4, __m128 minz4, __m128 maxx4, __m128 maxy4, __m128 maxz4, const float& t_hit)
+const __m128 IntersectQuadAABB(Ray& ray, __m128 minx4, __m128 miny4, __m128 minz4, __m128 maxx4, __m128 maxy4, __m128 maxz4, const float& t_hit)
 {
 	__m128 ox = _mm_set_ps1(ray.origin.x), oy = _mm_set_ps1(ray.origin.y), oz = _mm_set_ps1(ray.origin.z);
 	__m128 idx = _mm_set_ps1(ray.invDir.x), idy = _mm_set_ps1(ray.invDir.y), idz = _mm_set_ps1(ray.invDir.z);
@@ -561,24 +422,10 @@ __m128 IntersectQuadAABB(Ray& ray, __m128 minx4, __m128 miny4, __m128 minz4, __m
 	__m128 mask = _mm_and_ps(maxge, _mm_and_ps(lesst, maxgemin));
 	return _mm_blendv_ps(dists, tmin, mask);
 }
-void Scene::IntersectQBVH(Ray& ray, Intersection& isect, const unsigned int nodeIdx) const
+const void Scene::IntersectQBVH(Ray& ray, Intersection& isect, const unsigned int nodeIdx) const
 {
 	QBVHNode* node = &qbvhNodes[nodeIdx];
 	alignas(16) float dists[4];
-
-	//glm::vec3 min0{ node->bminx4[0],node->bminy4[0],node->bminz4[0] };
-	//glm::vec3 min1{ node->bminx4[1],node->bminy4[1],node->bminz4[1] };
-	//glm::vec3 min2{ node->bminx4[2],node->bminy4[2],node->bminz4[2] };
-	//glm::vec3 min3{ node->bminx4[3],node->bminy4[3],node->bminz4[3] };
-	//glm::vec3 max0{ node->bmaxx4[0],node->bmaxy4[0],node->bmaxz4[0] };
-	//glm::vec3 max1{ node->bmaxx4[1],node->bmaxy4[1],node->bmaxz4[1] };
-	//glm::vec3 max2{ node->bmaxx4[2],node->bmaxy4[2],node->bmaxz4[2] };
-	//glm::vec3 max3{ node->bmaxx4[3],node->bmaxy4[3],node->bmaxz4[3] };
-	//dists[0] = IntersectAABB(ray, min0, max0, isect.t_hit);
-	//dists[1] = IntersectAABB(ray, min1, max1, isect.t_hit);
-	//dists[2] = IntersectAABB(ray, min2, max2, isect.t_hit);
-	//dists[3] = IntersectAABB(ray, min3, max3, isect.t_hit);
-
 	_mm_store_ps(dists, IntersectQuadAABB(ray, node->minx4, node->miny4, node->minz4, node->maxx4, node->maxy4, node->maxz4, isect.t_hit));
 	int distIndices[4]{ 0,1,2,3 };
 	if (dists[0] > dists[1]) std::swap(distIndices[0], distIndices[1]);
@@ -594,28 +441,12 @@ void Scene::IntersectQBVH(Ray& ray, Intersection& isect, const unsigned int node
 		{
 			for (int i = 0; i < node->count[distIndices[j]]; i++)
 			{
-				const Shape& shape = shapes[triIdx[node->child[distIndices[j]] + i]];
-				switch (shape.type)
+				const Triangle& tri = Triangles[triIdx[node->child[distIndices[j]] + i]];
+				if (tri.Intersect(ray, isect))
 				{
-				case ShapeType::Triangle:
-					if (shape.triangle.Intersect(ray, isect))
-					{
-						isect.objIdx = triIdx[node->child[distIndices[j]] + i];
-					}
-					break;
-				case ShapeType::Sphere:
-					if (shape.sphere.Intersect(ray, isect.t_hit))
-					{
-						isect.objIdx = triIdx[node->child[distIndices[j]] + i];
-					}
-					break;
-				case ShapeType::Plane:
-					if (shape.plane.Intersect(ray, isect.t_hit))
-					{
-						isect.objIdx = triIdx[node->child[distIndices[j]] + i];
-					}
-					break;
+					isect.objIdx = triIdx[node->child[distIndices[j]] + i];
 				}
+				continue;
 			}
 		}
 		else
@@ -626,7 +457,7 @@ void Scene::IntersectQBVH(Ray& ray, Intersection& isect, const unsigned int node
 	return;
 }
 
-bool Scene::OcclusionBVH(Ray& ray, float distance) const
+const bool Scene::OcclusionBVH(Ray& ray, float distance) const
 {
 	BVHNode* node = &bvhNode[rootNodeIdx], * stack[64];
 	unsigned int stackPtr = 0;
@@ -637,27 +468,10 @@ bool Scene::OcclusionBVH(Ray& ray, float distance) const
 		{
 			for (unsigned int i = 0; i < node->triCount; i++)
 			{
-				const Shape& shape = shapes[triIdx[node->leftFirst + i]];
-				switch (shape.type)
+				const Triangle& tri = Triangles[triIdx[node->leftFirst + i]];
+				if (tri.Intersect(ray, dis))
 				{
-				case ShapeType::Triangle:
-					if (shape.triangle.Intersect(ray, dis))
-					{
-						if (dis * dis < distance) return true;
-					}
-					break;
-				case ShapeType::Sphere:
-					if (shape.sphere.Intersect(ray, dis))
-					{
-						if (dis * dis < distance) return true;
-					}
-					break;
-				case ShapeType::Plane:
-					if (shape.plane.Intersect(ray, dis))
-					{
-						if (dis * dis < distance) return true;
-					}
-					break;
+					if (dis * dis < distance) return true;
 				}
 				continue;
 			}
@@ -670,10 +484,8 @@ bool Scene::OcclusionBVH(Ray& ray, float distance) const
 		}
 		BVHNode* child1 = &bvhNode[node->leftFirst];
 		BVHNode* child2 = &bvhNode[node->leftFirst + 1];
-		float dist1 = IntersectAABB_SSE(ray, child1->aabbMin4, child1->aabbMax4, dis);
-		float dist2 = IntersectAABB_SSE(ray, child2->aabbMin4, child2->aabbMax4, dis);
-		//float dist1 = IntersectAABB(ray, child1->aabbMin, child1->aabbMax, dis);
-		//float dist2 = IntersectAABB(ray, child2->aabbMin, child2->aabbMax, dis);
+		float dist1 = IntersectAABB(ray, child1->aabbMin, child1->aabbMax, dis);
+		float dist2 = IntersectAABB(ray, child2->aabbMin, child2->aabbMax, dis);
 
 		if (dist1 > dist2) { std::swap(dist1, dist2); std::swap(child1, child2); }
 		if (dist1 == std::numeric_limits<float>::infinity())

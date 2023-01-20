@@ -35,4 +35,6 @@ private:
 	uint32_t* m_ImageData = nullptr;
 	glm::vec3* accumulator = nullptr;
 	uint32_t frameIndex = 1;
+
+	std::vector<uint32_t> m_HorizontalIter, m_VerticalIter;
 };

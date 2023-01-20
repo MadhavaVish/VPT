@@ -87,17 +87,22 @@ bool Camera::OnUpdate(float ts)
 
 void Camera::OnResize(uint32_t width, uint32_t height)
 {
-	//if (width == m_ViewportWidth && height == m_ViewportHeight)
-		//return;
+	if (width == m_ViewportWidth && height == m_ViewportHeight)
+	{
+		RecalculateView();
+		return;
+	}
 	m_ViewportWidth = width;
 	m_ViewportHeight = height;
+	invHeight = 1.f / (float)m_ViewportHeight;
+	invWidth = 1.f / (float)m_ViewportWidth;
 	aspect = (float)m_ViewportHeight/ (float)m_ViewportWidth;
 	RecalculateView();
 }
 const Ray Camera::getPrimaryRay(const int x, const int y, const glm::vec2 offset) const
 {
-	float u = (x + offset.x) / (float)m_ViewportWidth;
-	float v = (y + offset.y) / (float)m_ViewportHeight;
+	float u = (x + offset.x) * invWidth;
+	float v = (y + offset.y) * invHeight;
 	u = u * 2 - 1;
 	v = v * 2 - 1;
 	glm::vec3 defocus{ 0.f };

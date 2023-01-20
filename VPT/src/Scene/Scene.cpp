@@ -35,19 +35,24 @@ Scene::Scene()
 	//addModel("assets/DeskScene/lamp.obj", glm::mat4(1.f), 5);
 	//addModel("assets/DeskScene/lampstand.obj", glm::mat4(1.f), 2);
 
+	//AddMaterial({ 0.7, 0.34, 0.21 }, 0.2f, 500, 0.f, false, true, 1.5f);
+	//addModel("assets/bunny.obj", glm::mat4(3.f), 0);
+	//AddMaterial({ 0.84, 0.96, 0.99 }, 0.2f, 500, 0.f, true, false, 1.5f);
+	//addPlane({ 0.f, 1.f, 0.f }, 0, 1);
+	//textures.push_back(new Texture("assets/earth.jpg"));
+	//AddMaterial({ 1, 1, 1 }, 0.2f, 500, 0.f, false, false, 1.5f);
+	//materials.back().textureIndex = 1;
+	//addSphere({ -2, 5.f, -6.f }, 5.f, 2);
 	AddMaterial({ 0.7, 0.34, 0.21 }, 0.2f, 500, 0.f, false, true, 1.5f);
-	addModel("assets/bunny.obj", glm::mat4(3.f), 0);
-	AddMaterial({ 0.84, 0.96, 0.99 }, 0.2f, 500, 0.f, true, false, 1.5f);
-	addPlane({ 0.f, 1.f, 0.f }, 0, 1);
-	textures.push_back(new Texture("assets/earth.jpg"));
-	AddMaterial({ 1, 1, 1 }, 0.2f, 500, 0.f, false, false, 1.5f);
-	materials.back().textureIndex = 1;
-	addSphere({ -2, 5.f, -6.f }, 5.f, 2);
-	//addModel("assets/Cornell/Left.obj", glm::mat4(1.f), 1);
-	//addModel("assets/Cornell/Right.obj", glm::mat4(1.f), 2);
-	//addModel("assets/Cornell/Top.obj", glm::mat4(1.f), 3);
-	//addModel("assets/Cornell/Bottom.obj", glm::mat4(1.f), 0);
-	//addModel("assets/Cornell/Back.obj", glm::mat4(1.f), 0);
+	addModel("assets/bunny.obj", glm::mat4(1.f), 0);
+	AddMaterial({ 0.156863f, 0.803922f, 0.172549f }, 0.2f, 500, 0.f, false, false, 1.5f);
+	AddMaterial({ 0.803922f, 0.152941f, 0.152941f }, 0.2f, 500, 0.f, false, false, 1.5f);
+	AddMaterial({ 0.803922f, 0.803922f, 0.803922f }, 0.2f, 500, 0.f, false, false, 1.5f);
+	addModel("assets/Cornell/Left.obj", glm::mat4(1.f), 1);
+	addModel("assets/Cornell/Right.obj", glm::mat4(1.f), 2);
+	addModel("assets/Cornell/Top.obj", glm::mat4(1.f), 3);
+	addModel("assets/Cornell/Bottom.obj", glm::mat4(1.f), 3);
+	addModel("assets/Cornell/Back.obj", glm::mat4(1.f), 3);
 	for (unsigned int i = 0; i < shapes.size(); i++)
 	{
 		triIdx.push_back(i);

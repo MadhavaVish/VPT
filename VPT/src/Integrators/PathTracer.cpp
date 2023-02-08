@@ -47,7 +47,7 @@ void PathTracer::Render(const Scene& scene, const Camera& camera)
 			glm::vec3 color(TraceRay(ray,0));
 			accumulator[x + y * m_FinalImage->GetWidth()] += color;
 
-			glm::vec4 accumulated(glm::pow(accumulator[x + y * m_FinalImage->GetWidth()] / (float)frameIndex, glm::vec3(1.f/2.2)), 1.f);
+			glm::vec4 accumulated(glm::pow(accumulator[x + y * m_FinalImage->GetWidth()] / (float)frameIndex, glm::vec3(1.f/2.2f)), 1.f);
 			accumulated = glm::clamp(accumulated, glm::vec4(0.f), glm::vec4(1.f));
 
 			m_ImageData[x + y * m_FinalImage->GetWidth()] = Utils::ConvertToRGBA(accumulated);

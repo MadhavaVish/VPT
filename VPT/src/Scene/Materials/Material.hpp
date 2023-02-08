@@ -402,7 +402,7 @@ inline glm::vec3 sampleGGX_VNDF(const glm::vec3& wo, float alpha, float u1, floa
     glm::vec3 T1 = (V.z < 0.9999f) ? glm::normalize(glm::cross(V, glm::vec3(0, 0, 1))) : glm::vec3(1, 0, 0);
     glm::vec3 T2 = cross(T1, V);
     // sample point with polar coordinates (r, phi)
-    float a = 1.0 / (1.0 + V.z);
+    float a = 1.0f / (1.0f + V.z);
     float r = sqrt(u1);
     float phi = (u2 < a) ? u2 / a * glm::pi<float>() : glm::pi<float>() + (u2 - a) / (1.0f - a) * glm::pi<float>();
     float P1 = r * cos(phi);

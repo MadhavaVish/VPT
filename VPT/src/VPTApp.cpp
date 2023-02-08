@@ -6,10 +6,7 @@
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #define GLM_FORCE_AVX
 
-//#include "Integrators/WhittedRenderer.hpp"
 #include "Integrators/PathTracer.hpp"
-#include "Integrators/WhittedRenderer.hpp"
-#include "Integrators/Visualizer.hpp"
 #include "Utils/Camera.hpp"
 #include "Utils/Intersection.hpp"
 #include <memory>

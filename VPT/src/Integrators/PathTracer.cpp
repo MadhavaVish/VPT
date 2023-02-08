@@ -15,55 +15,149 @@ void PathTracer::Render(const Scene& scene, const Camera& camera)
 	//float invWidth = 1.f / (float)m_FinalImage->GetWidth();
 	//float invHeight = 1.f / (float)m_FinalImage->GetHeight();
 
-	m_ActiveCamera = &camera;
-	std::for_each(std::execution::par, m_VerticalIter.begin(), m_VerticalIter.end(),
-		[this](uint32_t y) {
-			for (int x = 0; x < m_FinalImage->GetWidth(); x++)
-			{
-				//m_ActiveCamera = &camera;
-				Ray ray;
-				glm::vec2 randomOffset(Walnut::Random::Float(), Walnut::Random::Float());
-				ray = m_ActiveCamera->getPrimaryRay(x, y, randomOffset);
+	//m_ActiveCamera = &camera;
+	//std::for_each(std::execution::par, m_VerticalIter.begin(), m_VerticalIter.end(),
+	//	[this](uint32_t y) {
+	//		for (int x = 0; x < m_FinalImage->GetWidth(); x++)
+	//		{
+	//			//m_ActiveCamera = &camera;
+	//			Ray ray;
+	//			glm::vec2 randomOffset(Walnut::Random::Float(), Walnut::Random::Float());
+	//			ray = m_ActiveCamera->getPrimaryRay(x, y, randomOffset);
 
-				glm::vec3 color(TraceRay(ray,0));
-				accumulator[x + y * m_FinalImage->GetWidth()] += color;
+	//			glm::vec3 color(TraceRay(ray,0));
+	//			accumulator[x + y * m_FinalImage->GetWidth()] += color;
 
-				glm::vec4 accumulated(glm::sqrt(accumulator[x + y * m_FinalImage->GetWidth()] / (float)frameIndex), 1.f);
-				accumulated = glm::clamp(accumulated, glm::vec4(0.f), glm::vec4(1.f));
+	//			glm::vec4 accumulated(glm::sqrt(accumulator[x + y * m_FinalImage->GetWidth()] / (float)frameIndex), 1.f);
+	//			accumulated = glm::clamp(accumulated, glm::vec4(0.f), glm::vec4(1.f));
 
-				m_ImageData[x + y * m_FinalImage->GetWidth()] = Utils::ConvertToRGBA(accumulated);
-			}
-		});
-	//#pragma omp parallel for schedule(dynamic)
-	//for (int y = 0; y < m_FinalImage->GetHeight(); y++)
-	//{
-	//	for (int x = 0; x < m_FinalImage->GetWidth(); x++)
-	//	{
-	//		m_ActiveCamera = &camera;
-	//		Ray ray;
-	//		glm::vec2 randomOffset(Walnut::Random::Float(), Walnut::Random::Float());
-	//		ray = m_ActiveCamera->getPrimaryRay(x, y, randomOffset);
+	//			m_ImageData[x + y * m_FinalImage->GetWidth()] = Utils::ConvertToRGBA(accumulated);
+	//		}
+	//	});
+	#pragma omp parallel for schedule(dynamic)
+	for (int y = 0; y < m_FinalImage->GetHeight(); y++)
+	{
+		for (int x = 0; x < m_FinalImage->GetWidth(); x++)
+		{
+			m_ActiveCamera = &camera;
+			Ray ray;
+			glm::vec2 randomOffset(Walnut::Random::Float(), Walnut::Random::Float());
+			ray = m_ActiveCamera->getPrimaryRay(x, y, randomOffset);
 
-	//		glm::vec3 color(TraceRay(ray,0));
-	//		accumulator[x + y * m_FinalImage->GetWidth()] += color;
+			glm::vec3 color(TraceRay(ray,0));
+			accumulator[x + y * m_FinalImage->GetWidth()] += color;
 
-	//		glm::vec4 accumulated(glm::pow(accumulator[x + y * m_FinalImage->GetWidth()] / (float)frameIndex, glm::vec3(gamma)), 1.f);
-	//		accumulated = glm::clamp(accumulated, glm::vec4(0.f), glm::vec4(1.f));
+			glm::vec4 accumulated(glm::pow(accumulator[x + y * m_FinalImage->GetWidth()] / (float)frameIndex, glm::vec3(1.f/2.2)), 1.f);
+			accumulated = glm::clamp(accumulated, glm::vec4(0.f), glm::vec4(1.f));
 
-	//		m_ImageData[x + y * m_FinalImage->GetWidth()] = Utils::ConvertToRGBA(accumulated);
-	//	}
-	//}
+			m_ImageData[x + y * m_FinalImage->GetWidth()] = Utils::ConvertToRGBA(accumulated);
+		}
+	}
 	m_FinalImage->SetData(m_ImageData);
 	if (settings.Accumulate)
 		frameIndex++;
 	else
 		Reset();
 }
+static glm::vec3 lerp(glm::vec3 x, glm::vec3 y, float t) {
+	return x * (1.f - t) + y * t;
+}
+static float max3(glm::vec3 v) {
+	return glm::max(glm::max(v.x, v.y), v.z);
+}
+static float computeRelativeIOR(const Material& mat, const glm::vec3& wo) {
+	bool entering = cosTheta(wo) > 0.0f;
+	return entering ? 1.0f / mat.ior_ : mat.ior_;
+}
+static void computeLobeProbabilities(const Material& mat, const glm::vec3& wo, float& pDiffuse, float& pSpecular, float& pTransmission) {
+	float eta = computeRelativeIOR(mat, wo);
+	glm::vec3 f0 = lerp(schlickF0FromRelativeIOR(eta), mat.baseColor_, mat.metalness_);
+	glm::vec3 fresnel = Fr_Schlick(abs(cosTheta(wo)), f0);
+
+	float diffuseWeight = (1.0f - mat.metalness_) * (1.0f - mat.transmission_);
+	float transmissionWeight = (1.0f - mat.metalness_) * mat.transmission_;
+
+	pDiffuse = max3(mat.baseColor_) * diffuseWeight;
+	pSpecular = max3(fresnel);
+	pTransmission = max3(glm::vec3(1.0f) - fresnel) * transmissionWeight;
+
+	float normFactor = 1.0f / (pDiffuse + pSpecular + pTransmission);
+	pDiffuse *= normFactor;
+	pSpecular *= normFactor;
+	pTransmission *= normFactor;
+}
+static float pdf(const Material& mat, const glm::vec3& wi, const glm::vec3& wo) {
+	float eta = computeRelativeIOR(mat, wo);
+
+	float pDiffuse, pSpecular, pTransmission;
+	computeLobeProbabilities(mat, wo, pDiffuse, pSpecular, pTransmission);
+
+	return pDiffuse * pdfCosineHemisphere(wi, wo)
+		+ pSpecular * pdfGGX_VNDF_reflection(wi, wo, mat.alpha_)
+		+ pTransmission * pdfGGX_VNDF_transmission(wi, wo, eta, mat.alpha_);
+}
+
+
+static glm::vec3 sampleDirection(const Material& mat, const glm::vec3& wo, float r, float u1, float u2, float* pdf) {
+	float eta = computeRelativeIOR(mat, wo);
+	float pDiffuse, pSpecular, pTransmission;
+	computeLobeProbabilities(mat, wo, pDiffuse, pSpecular, pTransmission);
+
+	glm::vec3 wi;
+	if (r < pDiffuse) {
+
+		wi = sign(cosTheta(wo)) * sampleCosineHemisphere(u1, u2);
+		//assert(isNormalized(wi));
+	}
+	else if (r < pDiffuse + pSpecular) {
+		glm::vec3 wo_upper = sign(cosTheta(wo)) * wo; // sign(+wo) * +wo = +wo, sign(-wo) * -wo = +wo
+		glm::vec3 wh = sign(cosTheta(wo)) * sampleGGX_VNDF(wo_upper, mat.alpha_, u1, u2);
+		if (dot(wo, wh) < 0.0f) {
+			return glm::vec3(0.0f);
+		}
+
+		wi = reflect(wo, wh);
+		if (!sameHemisphere(wi, wo)) {
+			wi = -wi;
+			//return glm::vec3(0.0f);
+		}
+	}
+	else {
+
+		glm::vec3 wo_upper = sign(cosTheta(wo)) * wo; // sign(+wo) * +wo = +wo, sign(-wo) * -wo = +wo
+		glm::vec3 wh = sign(cosTheta(wo)) * sampleGGX_VNDF(wo_upper, mat.alpha_, u1, u2);
+
+		refract(wo, wh, eta, wi, mat.ior_);
+	}
+
+	if (pdf) {
+		*pdf = pDiffuse * pdfCosineHemisphere(wi, wo)
+			+ pSpecular * pdfGGX_VNDF_reflection(wi, wo, mat.alpha_)
+			+ pTransmission * pdfGGX_VNDF_transmission(wi, wo, eta, mat.alpha_);
+	}
+
+	return wi;
+}
+
+static glm::vec3 evaluate(const Material& mat, const glm::vec3 hitColor, const glm::vec3& wi, const glm::vec3& wo) {
+	float eta = computeRelativeIOR(mat, wo);
+	glm::vec3 f0 = lerp(schlickF0FromRelativeIOR(eta), hitColor, mat.metalness_);
+
+	glm::vec3 diffuse = diffuse_Lambert(wi, wo, hitColor);
+	glm::vec3 specular = microfacetReflection_GGX(wi, wo, f0, eta, mat.alpha_);
+	glm::vec3 transmission = hitColor * microfacetTransmission_GGX(wi, wo, f0, eta, mat.alpha_);
+
+	float diffuseWeight = (1.0f - mat.metalness_) * (1.0f - mat.transmission_);
+	float transmissionWeight = (1.0f - mat.metalness_) * mat.transmission_;
+
+	return diffuseWeight * diffuse + specular + transmissionWeight * transmission;
+}
+
 glm::vec3 PathTracer::TraceRay(Ray& ray, int depth)
 {
-	size_t maxBounces = 300;
+	int bounce = 0;
 	glm::vec3 throughput(1.f);
-	for (size_t i = 0; i < maxBounces; i++)
+	while(true)
 	{
 		Intersection isect;
 		if (m_ActiveScene->Intersect(ray, isect))
@@ -72,11 +166,11 @@ glm::vec3 PathTracer::TraceRay(Ray& ray, int depth)
 			Frame surf(interaction.hit_normal);
 
 			Material mat = m_ActiveScene->materials[interaction.materialIdx];
-			glm::vec3 hitColor = mat.albedo;
+			glm::vec3 hitColor = mat.baseColor_;
 			float rrProb = 1;
-			if (depth > 3)
+			if (bounce > 3)
 			{
-				rrProb = std::max({ hitColor.x, hitColor.y, hitColor.z });
+				rrProb = glm::clamp(std::max({ throughput.x, throughput.y, throughput.z }), 0.05f, 0.95f);
 				float rr = Walnut::Random::Float();
 				if (rr > rrProb)
 				{
@@ -87,65 +181,21 @@ glm::vec3 PathTracer::TraceRay(Ray& ray, int depth)
 			{
 				hitColor *= m_ActiveScene->textures[mat.textureIndex]->sampleImageTexture(interaction.uv.x, interaction.uv.y);
 			}
-			if (mat.radiance > 0.f)
+			if (glm::dot(mat.emittance_,mat.emittance_) > 0.f)
 			{
-				return throughput * hitColor * mat.radiance;
+				return throughput * hitColor * mat.emittance_;
 			}
-			if (mat.mirror)
-			{
-				glm::vec3 dir = surf.ToLocal(-ray.direction);
-				dir.x *= -1;
-				dir.y *= -1;
-				dir = surf.ToWorld(dir);
-				ray = getRay(rayPnt(ray, isect.t_hit) + interaction.hit_normal * 0.0001f, dir);
-				throughput *= hitColor;
-				continue;
+			float pdf;
+			glm::vec3 dir = sampleDirection(mat, surf.ToLocal(-ray.direction) , Walnut::Random::Float(), Walnut::Random::Float(), Walnut::Random::Float(), &pdf);
+			float cosThetaI = abs(cosTheta(dir));
+			if (cosThetaI <= 0.0f || pdf <= 0.0f) {
+				break;
 			}
-			else if (mat.glass)
-			{
-				float fres = fresnel(ray.direction, interaction.hit_normal, mat.ior);
-				if (Walnut::Random::Float() < fres)
-				{
-					glm::vec3 dir = surf.ToLocal(-ray.direction);
-					dir.x *= -1;
-					dir.y *= -1;
-					dir = surf.ToWorld(dir);
-					if (glm::dot(interaction.hit_normal, dir) < 0)
-					{
-						ray = getRay(rayPnt(ray, isect.t_hit) - interaction.hit_normal * 0.0001f, glm::normalize(dir));
-					}
-					else
-					{
-						ray = getRay(rayPnt(ray, isect.t_hit) + interaction.hit_normal * 0.0001f, glm::normalize(dir));
-					}
-					throughput *= hitColor;
-					continue;
-				}
-				else
-				{
-					glm::vec3 dir = refract(ray.direction, interaction.hit_normal, mat.ior);
-					if (glm::dot(interaction.hit_normal, dir) < 0)
-					{
-						ray = getRay(rayPnt(ray, isect.t_hit) - interaction.hit_normal * 0.0001f, glm::normalize(dir));
-					}
-					else
-					{
-						ray = getRay(rayPnt(ray, isect.t_hit) + interaction.hit_normal * 0.0001f, glm::normalize(dir));
-					}
-					throughput *= hitColor;
-					continue;
-				}
-			}
-			else
-			{
-				float pdf;
-				glm::vec3 dir = sampleCosineHemisphere(pdf);
-				dir = surf.ToWorld(dir);
-				glm::vec3 diffuse = glm::one_over_pi<float>() * hitColor * glm::dot(interaction.hit_normal, dir) / (pdf * rrProb);
-				ray = getRay(rayPnt(ray, isect.t_hit) + interaction.hit_normal * 0.0001f, glm::normalize(dir));
-				throughput *= diffuse;
-				continue;
-			}
+			glm::vec3 bsdf = evaluate(mat, hitColor, dir, surf.ToLocal(-ray.direction));
+			ray = getRay(rayPnt(ray, isect.t_hit) + sign(cosTheta(dir)) * interaction.hit_normal * 0.001f, surf.ToWorld(dir));
+			throughput *= ((bsdf * cosThetaI)/(pdf*rrProb));
+			bounce++;
+			continue;
 		}
 		else
 		{

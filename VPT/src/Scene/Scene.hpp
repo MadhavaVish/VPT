@@ -75,7 +75,8 @@ public:
 	SurfaceInteraction getSurfaceProperties(const Ray& ray, const Intersection& isect) const;
 	const glm::vec3 getSkyColor(const Ray& ray) const;
 
-	void AddMaterial(const glm::vec3 albedo, const float& ks, const float& exponent, const float& radiance, const bool& mirror, const bool& glass, const float& ior);
+	void AddMaterial(const glm::vec3 albedo, const float& radiance, const float& metalness, const bool& transmission, const float& roughness, const float& ior);
+	//void AddMaterial(const glm::vec3 albedo, const float& ks, const float& exponent, const float& radiance, const bool& mirror, const bool& glass, const float& ior);
 	void addModel(const std::string& filepath, Transform transform, uint32_t material);
 	const bool OcclusionBVH(Ray& ray, float distance) const;
 private:
@@ -96,8 +97,8 @@ public:
 private:
 	uint32_t skyboxIndex;
 	std::vector<unsigned int> triIdx;
-	BVHNode* bvhNode = 0;
-	QBVHNode* qbvhNodes = 0;
+	std::vector<BVHNode> bvhNode;
+	std::vector<QBVHNode>qbvhNodes;
 	unsigned int rootNodeIdx = 0, nodesUsed = 2;
 	unsigned int qrootNodeIdx = 0, qnodesUsed = 1;
 };

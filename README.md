@@ -29,6 +29,7 @@ This project was built for my Advanced Graphics class.
 ![image](https://github.com/MadhavaVish/VPT/assets/19480221/3907bfb7-7927-44d1-a9ed-541da0773dc6)
 *Bread on a desk, this time with a correct DOF implementation and textures!*
 ![image](https://github.com/MadhavaVish/VPT/assets/19480221/d1cdb834-4c53-42f8-9a5b-e26001951820)
+
 *Using Jacco Bikkers articles a BVH handling a 28 million triangle Lucy!*
 ![image](https://github.com/MadhavaVish/VPT/assets/19480221/ce0dd3ec-6093-409b-b477-8b1b42338714)
 *Even without translucency or multiple material maps it turned out quite pretty*
